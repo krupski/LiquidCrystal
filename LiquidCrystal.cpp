@@ -324,7 +324,7 @@ void LiquidCrystal::_send_cmd (uint8_t data)
 
 void LiquidCrystal::_send_dat (uint8_t data)
 {
-	write (data);
+	_send (data, DAT);
 }
 
 inline size_t LiquidCrystal::write (uint8_t data)
