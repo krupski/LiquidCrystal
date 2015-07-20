@@ -2,10 +2,7 @@
 //
 //  Arduino Liquid Crystal (LCD) driver
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
-//
-//  Changes and additions: Added an SPI-like serial driver
-//  for the Noritake CUU class of Vacuum Florescent Displays.
-//  Copyright (c) 2012, 2015 Roger A. Krupski <rakrupski@verizon.net>
+//  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
 //  Last update: 19 July 2015
 //
