@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 19 July 2015 
+//  Last update: 19 July 2015
 //
 //  Free software. Use, modify, distribute freely. No warranty is
 //  given or implied. Absolutely NOT for medical, aerospace or any
