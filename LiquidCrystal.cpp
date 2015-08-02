@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 19 July 2015
+//  Last update: 01 August 2015
 //
 //  Free software. Use, modify, distribute freely. No warranty is
 //  given or implied. Absolutely NOT for medical, aerospace or any
@@ -67,13 +67,6 @@ void LiquidCrystal::init (
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
 ) {
-
-	uint8_t x, dpp;
-	uint8_t data_pin[] = {
-		d0, d1, d2, d3, d4, d5, d6, d7,
-	};
-
-	_delay_us (50000); // wait more than 40 msec after powerup
 	_bit_mode = bitmode; // 4 bit (0x04), 8 bit (0x08) or serial (0xFF) mode flag
 
 	if (_bit_mode == MODE_S) { // 0xFF == serial mode
@@ -82,38 +75,37 @@ void LiquidCrystal::init (
 		_serial_mode = 1; // flag "we are in serial mode"
 		_reset_pin = d0; // alternate use of pin
 
-		// template for serial command. note that bit 2 (RW) and bit 1 (RS)
+		// template for serial command. note that bit 1 (RS) and bit 2 (RW)
 		// are dynamically set or cleared as required by the driver itself.
 		_serial_cmd = (0b11111110);
 
-		dpp = digitalPinToPort (rs); // SISO pin is on RS
-		_SIO_BIT  = digitalPinToBitMask (rs);
-		_SIO_PIN  = portInputRegister  (dpp);
-		_SIO_PORT = portOutputRegister (dpp);
-		_SIO_DDR  = portModeRegister   (dpp);
+		_x = digitalPinToPort (rs); // SISO pin is on RS
+		_SIO_BIT = digitalPinToBitMask (rs);
+		_SIO_PIN = portInputRegister (_x);
+		_SIO_PORT = portOutputRegister (_x);
+		_SIO_DDR = portModeRegister (_x);
 		*_SIO_PORT |= _SIO_BIT; // set SISO pin high
 		*_SIO_DDR &= ~_SIO_BIT; // SISO pin is in "input_pullup" mode
 
-		dpp = digitalPinToPort (rw); // STROBE pin is on RW
-		_STB_BIT  = digitalPinToBitMask (rw);
-		_STB_PORT = portOutputRegister (dpp);
-		_STB_DDR  = portModeRegister   (dpp);
+		_x = digitalPinToPort (rw); // STROBE pin is on RW
+		_STB_BIT = digitalPinToBitMask (rw);
+		_STB_PORT = portOutputRegister (_x);
+		_STB_DDR = portModeRegister (_x);
 		*_STB_PORT |= _STB_BIT;
-		*_STB_DDR  |= _STB_BIT;
+		*_STB_DDR |= _STB_BIT;
 
-		dpp = digitalPinToPort (en); // SCLOCK pin is on EN
-		_SCK_BIT  = digitalPinToBitMask (en);
-		_SCK_PORT = portOutputRegister (dpp);
-		_SCK_DDR  = portModeRegister   (dpp);
+		_x = digitalPinToPort (en); // SCLOCK pin is on EN
+		_SCK_BIT = digitalPinToBitMask (en);
+		_SCK_PORT = portOutputRegister (_x);
+		_SCK_DDR = portModeRegister (_x);
 		*_SCK_PORT |= _SCK_BIT;
-		*_SCK_DDR  |= _SCK_BIT;
-
-		dpp = digitalPinToPort (d0); // RESET pin is on D0
-		_RST_BIT  = digitalPinToBitMask (d0);
-		_RST_PORT = portOutputRegister (dpp);
-		_RST_DDR  = portModeRegister   (dpp);
+		*_SCK_DDR |= _SCK_BIT;
 
 		if (_reset_pin != NO_RST) { // if we are using reset...
+			_x = digitalPinToPort (d0); // RESET pin is on D0
+			_RST_BIT = digitalPinToBitMask (d0);
+			_RST_PORT = portOutputRegister (_x);
+			_RST_DDR = portModeRegister (_x);
 			*_RST_PORT &= ~_RST_BIT; // lower reset pin
 			*_RST_DDR |= _RST_BIT; // set it as output (assert reset)
 			_delay_us (5000); // delay 5 msec
@@ -123,48 +115,53 @@ void LiquidCrystal::init (
 
 	} else { // parallel mode
 
+		static const uint8_t data_pin[] = {
+			d0, d1, d2, d3, d4, d5, d6, d7
+		};
+
 		_serial_mode = 0; // flag "not serial mode"
 		_rw_pin = rw; // global copy of r/w
 
-		dpp = digitalPinToPort (rs);
+		_x = digitalPinToPort (rs);
 		_RS_BIT = digitalPinToBitMask (rs); // get bitmasks for parallel I/O
-		_RS_PORT = portOutputRegister (dpp); // get output ports
-		_RS_DDR = portModeRegister (dpp); // get DDR registers
+		_RS_PORT = portOutputRegister (_x); // get output ports
+		_RS_DDR = portModeRegister (_x); // get DDR registers
 		*_RS_PORT |= _RS_BIT; // initial = high
 		*_RS_DDR |= _RS_BIT; // ddr = output
 
-		dpp = digitalPinToPort (rw);
-		_RW_BIT = digitalPinToBitMask (rw);
-		_RW_PORT = portOutputRegister (dpp);
-		_RW_DDR = portModeRegister (dpp);
-		*_RW_PORT |= _RW_BIT; // initial = high
-
-		dpp = digitalPinToPort (en);
+		_x = digitalPinToPort (en);
 		_EN_BIT = digitalPinToBitMask (en);
-		_EN_PORT = portOutputRegister (dpp);
-		_EN_DDR = portModeRegister (dpp);
+		_EN_PORT = portOutputRegister (_x);
+		_EN_DDR = portModeRegister (_x);
 		*_EN_PORT &= ~_EN_BIT; // initial = low
 		*_EN_DDR |= _EN_BIT; // ddr = output
 
-		x = 8;
-		while (x--) {
-			dpp = digitalPinToPort (data_pin[x]);
-			_BIT_MASK[x] = digitalPinToBitMask (data_pin[x]); // get bitmask
-			_DATA_DDR[x] = portModeRegister (dpp); // get DDR register
-			_DATA_PORT[x] = portOutputRegister (dpp); // get output port register
-			*_DATA_DDR[x] |= _BIT_MASK[x]; // set port as output
-			if (x == _bit_mode) { // only do 7...4 if 4 bit mode
+		if (_rw_pin != NO_RW) {
+			_x = digitalPinToPort (rw);
+			_RW_BIT = digitalPinToBitMask (rw);
+			_RW_PORT = portOutputRegister (_x);
+			_RW_DDR = portModeRegister (_x);
+			*_RW_PORT |= _RW_BIT; // initial = high
+			*_RW_DDR |= _RW_BIT; // ddr = output
+		}
+
+		_y = 8;
+		while (_y--) {
+			_x = digitalPinToPort (data_pin[_y]);
+			_BIT_MASK[_y] = digitalPinToBitMask (data_pin[_y]); // get bitmask
+			_DATA_DDR[_y] = portModeRegister (_x); // get DDR register
+			_DATA_PORT[_y] = portOutputRegister (_x); // get output port register
+			*_DATA_PORT[_y] &= ~_BIT_MASK[_y]; // set port low
+			*_DATA_DDR[_y] |= _BIT_MASK[_y]; // set port as output
+
+			// if we are in 4 bit mode then only enable d7...d4 as outputs
+			if (_y == _bit_mode) {
 				break;
 			}
 		}
-
-		if (_rw_pin != NO_RW) {
-			*_RW_DDR |= _RW_BIT;
-
-		} else {
-			*_RW_DDR &= ~_RW_BIT;
-		}
 	}
+
+	begin (16, 1);
 }
 
 void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
@@ -172,97 +169,127 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 	_numcols = cols;
 	_numrows = rows;
 
-	// software reset (Hitachi manual pg. 45 & 46) this is always written
-	// in 8 bit mode therefore we use "_transfer8bits" instead of "_send"
-	_transfer8bits (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_us (5000); // wait more than 4.1ms (pg 45)
+	// setup default DDRAM offsets
+	setRowOffsets (0x00, 0x40, 0x00 + _numcols, 0x40 + _numcols);
 
-	_transfer8bits (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_us (200); // wait more than 100 us (pg 45)
+	_displayFunction = 0; // init template
 
-	_transfer8bits (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_us (200); // wait more than 100 us (pg 45)
+	// build the _displayFunction template
+	if (_bit_mode == MODE_4) {
+		_displayFunction |= (LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS);
 
-	// build setup byte for function set
-	_displayFunction = LCD_FUNCTIONSET; // 0x20
-	_displayFunction |= (_bit_mode == MODE_4 ? LCD_4BITMODE : LCD_8BITMODE); // set 4 or 8 bit interface
-	_displayFunction |= (_numrows == 1 ? LCD_1LINE : LCD_2LINE); // LCD 1 line or more
-	_displayFunction |= ((dotsize && (_numrows == 1)) ? LCD_5x10DOTS : LCD_5x8DOTS); // tall bitmap if supported
+	} else {
+		_displayFunction |= (LCD_8BITMODE | LCD_1LINE | LCD_5x8DOTS);
+	}
 
-	_transfer8bits (_displayFunction); // set 4/8 bit mode, lines and font
+	if ((dotsize != LCD_5x8DOTS) && (_numrows == 1)) {
+		_displayFunction |= LCD_5x10DOTS;
+	}
 
-	///////////////////////////////////////////////////////////////////////
-	// from here on we need to use "_send_cmd" to automatically use //
-	// the 8 bit or 4 bit interface as setup. //
-	// note: busy flag is valid from here after but we don't use it :( //
-	///////////////////////////////////////////////////////////////////////
-	// build setup byte for cursor move stuff
-	_displayEntryMode = LCD_ENTRYMODESET; // 0x04
-	_displayEntryMode |= LCD_ENTRYINC; // set cursor to increment
-	_displayEntryMode |= LCD_ENTRYNOSHIFT; // no display shift
+	if (_numrows > 1) {
+		_displayFunction |= LCD_2LINE;
+	}
 
-	_send_cmd (_displayEntryMode); // send command
+	// we need at least 40ms after power rises above 2.7V before sending
+	// commands. Arduino can turn on way before 4.5V so we'll wait 50
+	_delay_us (50000);
 
-	// build setup byte for display control
-	_displayControl = LCD_DISPLAYCTRL; // 0x08
-	_displayControl |= LCD_BLINKOFF; // blink off
-	_displayControl |= LCD_CURSOROFF; // underline cursor off
+	_x = _bit_mode; // save actual bitmode
 
-	_send_cmd (_displayControl); // send displaycontrol command
+	// send initialization in 8 bit mode via _send_cmd
+	if (_bit_mode == MODE_4) {
+		_bit_mode = MODE_8; // force reset to be an 8 bit write
+	}
 
-	// build setup byte for cursor control
-	_displayCursor = LCD_CURSORSHIFT; // 0x10
-	_displayCursor |= LCD_MOVELEFT; // display moves left IF shift enabled
-	_displayCursor |= LCD_CURSORMOVE; // cursor moves (display does not shift)
+	// send reset sequence
+	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
+	_delay_us (4500); // wait min 4.1 ms
 
-	_send_cmd (_displayCursor); // send displaycursor command
-	setBrightness (100); // set default brightness & turn on display
-	clearScreen();  // clear screen
-	// ready to go from here!
+	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
+	_delay_us (4500); // wait min 4.1 ms
+
+	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
+	_delay_us (125); // wait min 100 us
+
+	// finish display reset
+	_send_cmd (LCD_FUNCTIONSET | _displayFunction);
+
+	_bit_mode = _x; // restore actual bitmode
+
+	///////////////////////////////////////////////////////////////////
+	/////////// from here on _send_cmd auto-selects bitmode ///////////
+	///////////////////////////////////////////////////////////////////
+
+	// build _displayControl template
+	_displayControl = 0; // init template
+	_displayControl |= (LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF);
+	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
+
+	// build _displayEntryMode template
+	_displayEntryMode = 0; // init template
+	_displayEntryMode |= LCD_ENTRYLEFT | LCD_ENTRYSHIFTDEC;
+	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+
+	// we're ready to go!
+	clearScreen ();
 }
 
-void LiquidCrystal::setBrightness (uint8_t percent)
+void LiquidCrystal::setBrightness (uint8_t pct)
 {
-	uint8_t _brightness = 0x03;
-	uint16_t i = 1000;
+	_x = 0b11;
+	_z = 1000;
 
-	percent = (percent > 100) ? 100 : percent;
+	// constrain percent
+	pct = (pct > 100) ? 100 : pct;
 
 	// shut off HV inverter & filament on VFD displays
 	// if brightness of "0" is selected.
-	setDisplay (percent ? 1 : 0);
+	setDisplay (pct ? 1 : 0);
 
 	// multiply everything by 10 so fractional
 	// numbers are calculated as integers
-	while (i && _brightness) {
-		if ((percent * 10) > (i + 5)) {
-			_brightness--;
+	while (_z && _x) {
+		if ((pct * 10) > (_z + 5)) {
+			_x--;
 		}
 
-		i -= 250;
+		_z -= (1000 / 4); // 4 brightness steps
 	}
 
-	_send_cmd (_displayFunction); // execute a function set
-	_send_data (_brightness); // set brightness
+	// execute a function set
+	_send_cmd (LCD_FUNCTIONSET | _displayFunction);
+	// send the brightness control bits - 0b00:100%, 0b01:75%, 0b10:50%, 0b11:25%
+	_send_data (_x); // set brightness (VFD only)
 }
 
 void LiquidCrystal::home (void)
 {
 	_send_cmd (LCD_RETURNHOME);
-	setCursor (0, 0);
 	_delay_ms (16); // max 15.2 ms!!!
-}
-
-void LiquidCrystal::clear (void)
-{
-	clearScreen();
+	setCursor (0, 0);
 }
 
 void LiquidCrystal::clearScreen (void)
 {
+	clear ();
+}
+
+void LiquidCrystal::clear (void)
+{
 	_send_cmd (LCD_CLEARDISPLAY);
-	setCursor (0, 0);
 	_delay_ms (16); // max 15.2 ms!!!
+	setCursor (0, 0);
+}
+
+// if using a 16x4 LCD and line 3 & 4 are not placed correctly try:
+// this ------> setRowOffsets(0x00, 0x40, 0x14, 0x54);
+// or this ---> setRowOffsets(0x00, 0x40, 0x10, 0x50);
+void LiquidCrystal::setRowOffsets (uint8_t row0, uint8_t row1, uint8_t row2, uint8_t row3)
+{
+	_row_offsets[0] = row0;
+	_row_offsets[1] = row1;
+	_row_offsets[2] = row2;
+	_row_offsets[3] = row3;
 }
 
 void LiquidCrystal::setLine (uint8_t x, uint8_t y)
@@ -272,15 +299,20 @@ void LiquidCrystal::setLine (uint8_t x, uint8_t y)
 
 void LiquidCrystal::setCursor (uint8_t x, uint8_t y)
 {
-	uint8_t row_offsets[] = {
-		0x00, 0x40, 0x14, 0x54,
-	};
+	const size_t max_lines = sizeof (_row_offsets) / sizeof (*_row_offsets);
 
-	if ((x < _numcols) && (y < _numrows)) {
-		_cur_x = x; // "real" cursor X position
-		_cur_y = y; // "real" cursor Y position
-		_send_cmd (LCD_SETDDRAMADDR | (x + row_offsets[y]));
+	if (! (y < max_lines)) {
+		y = (max_lines - 1); // we count rows starting w/0
 	}
+
+	if (! (y < _numrows)) {
+		y = (_numrows - 1); // we count rows starting w/0
+	}
+
+	_cur_x = x; // record cursor X pos
+	_cur_y = y; // record cursor Y pos
+
+	_send_cmd (LCD_SETDDRAMADDR | (x + _row_offsets[y]));
 }
 
 void LiquidCrystal::getCursor (uint8_t &x, uint8_t &y)
@@ -320,25 +352,78 @@ void LiquidCrystal::blink (void)
 	setBlink (1);
 }
 
+void LiquidCrystal::noUnderline (void)
+{
+	setUnderline (0);
+}
+
+void LiquidCrystal::underline (void)
+{
+	setUnderline (1);
+}
+
+// This will 'left justify' text from the cursor
+void LiquidCrystal::noAutoscroll (void)
+{
+	setAutoscroll (0);
+}
+
+// This will 'right justify' text from the cursor
+void LiquidCrystal::autoscroll (void)
+{
+	setAutoscroll (1);
+}
+
 // Turn the display on/off (quickly)
 void LiquidCrystal::setDisplay (uint8_t on)
 {
 	on ? _displayControl |= LCD_DISPLAYON : _displayControl &= ~LCD_DISPLAYON;
-	_send_cmd (LCD_DISPLAYCTRL | _displayControl);
+	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
 }
 
 // Turns the underline cursor on/off
 void LiquidCrystal::setUnderline (uint8_t on)
 {
 	on ? _displayControl |= LCD_CURSORON : _displayControl &= ~LCD_CURSORON;
-	_send_cmd (LCD_DISPLAYCTRL | _displayControl);
+	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
 }
 
 // Turn on and off the blinking cursor
 void LiquidCrystal::setBlink (uint8_t on)
 {
 	on ? _displayControl |= LCD_BLINKON : _displayControl &= ~LCD_BLINKON;
-	_send_cmd (LCD_DISPLAYCTRL | _displayControl);
+	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
+}
+
+void LiquidCrystal::setAutoscroll (uint8_t on)
+{
+	on ? _displayEntryMode |= LCD_ENTRYSHIFTINC : _displayEntryMode &= ~LCD_ENTRYSHIFTINC;
+	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+}
+
+// These commands scroll the display without changing the RAM
+void LiquidCrystal::scrollDisplayLeft (void)
+{
+	_send_cmd (LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
+}
+
+void LiquidCrystal::scrollDisplayRight (void)
+{
+	_send_cmd (LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
+}
+
+// This is for text that flows Left to Right
+void LiquidCrystal::leftToRight (void)
+{
+	_displayEntryMode |= LCD_ENTRYLEFT;
+	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+}
+
+// This is for text that flows Right to Left
+void LiquidCrystal::rightToLeft (void)
+{
+	_displayEntryMode &= ~LCD_ENTRYLEFT;
+	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
 }
 
 // Allows us to fill the first 8 CGRAM locations
@@ -347,13 +432,15 @@ void LiquidCrystal::setBlink (uint8_t on)
 // use "write" instead.
 void LiquidCrystal::createChar (uint8_t location, const uint8_t *charmap)
 {
-	uint8_t i;
 	location &= 0x07; // we only have 8 locations 0-7
+
 	_send_cmd (LCD_SETCGRAMADDR | (location * 8));
-	for (i = 0; i < 8; i++) {
-		_send_data (* (charmap + i)); // 8 bytes to a char (but only 5 bits)
+
+	for (_x = 0; _x < 8; _x++) {
+		_send_data (*(charmap + _x)); // 8 bytes to a char (but only 5 bits)
 	}
-	home (); // make sure cursor isn't fubar
+
+	home ();  // make sure cursor isn't fubar
 }
 
 void LiquidCrystal::createChar_P (uint8_t location, const uint8_t *charmap)
@@ -364,26 +451,18 @@ void LiquidCrystal::createChar_P (uint8_t location, const uint8_t *charmap)
 
 void LiquidCrystal::createChar_P (uint8_t location, const uint32_t charmap)
 {
-	uint8_t i;
 	location &= 0x07; // we only have 8 locations 0-7
+
 	_send_cmd (LCD_SETCGRAMADDR | (location * 8));
-	for (i = 0; i < 8; i++) {
-		_send_data (PGM_READ (charmap + i));
+
+	for (_x = 0; _x < 8; _x++) {
+		_send_data (PGM_READ (charmap + _x));
 	}
-	home (); // make sure cursor isn't fubar
+
+	home ();  // make sure cursor isn't fubar
 }
 
 // private functions
-void LiquidCrystal::_send_cmd (uint8_t data)
-{
-	_send (data, LOW);
-}
-
-void LiquidCrystal::_send_data (uint8_t data)
-{
-	_send (data, HIGH);
-}
-
 // dummies for stream compatability
 int LiquidCrystal::available (void)
 {
@@ -402,26 +481,36 @@ int LiquidCrystal::read (void)
 
 void LiquidCrystal::flush (void)
 {
+	// void so return nothing
 }
 
+///////////////////////////////////////////////
+//     note 0x00...0x07 are custom chars     //
+///////////////////////////////////////////////
 size_t LiquidCrystal::write (uint8_t data)
 {
 	switch (data) {
+
 		case 0x08: {
-			return _backSpace();
+			return _backSpace ();
 		}
 
-		case 0x0a: {
-			return _lineFeed();
+		case 0x09: {
+			data = 0x20; // send a tab as a space
+			break;
 		}
 
-		case 0x0c: {
+		case 0x0A: {
+			return _lineFeed ();
+		}
+
+		case 0x0C: {
 			clearScreen();
 			return 0;
 		}
 
-		case 0x0d: {
-			return _carriageReturn();
+		case 0x0D: {
+			return _carriageReturn ();
 		}
 
 		default: {
@@ -444,7 +533,7 @@ size_t LiquidCrystal::write (uint8_t data)
 		}
 	}
 
-	return 1;
+	return (size_t) 1;
 }
 
 size_t LiquidCrystal::_backSpace (void)
@@ -465,7 +554,7 @@ size_t LiquidCrystal::_backSpace (void)
 		setCursor (_numcols - 1, _tmp_y ? _tmp_y - 1 : _numrows - 1);
 	}
 
-	return (size_t) - 1;
+	return (size_t) 0;
 }
 
 size_t LiquidCrystal::_lineFeed (void)
@@ -477,13 +566,42 @@ size_t LiquidCrystal::_lineFeed (void)
 		setCursor (_cur_x, _cur_y + 1); // cursor down one line
 	}
 
-	return (size_t) 1;
+	return (size_t) 0;
 }
 
 size_t LiquidCrystal::_carriageReturn (void)
 {
 	setCursor (0, _cur_y);
-	return 0;
+	return (size_t) 0;
+}
+
+void LiquidCrystal::_send_cmd (uint8_t data)
+{
+	_send (data, _CMD);
+}
+
+void LiquidCrystal::_send_data (uint8_t data)
+{
+	_send (data, _DATA);
+}
+
+// write either command or data
+void LiquidCrystal::_send (uint8_t data, uint8_t rs)
+{
+	if (_serial_mode) { // set or clear RS bit in serial command byte
+		rs ? _serial_cmd |= RSBIT : _serial_cmd &= ~RSBIT;
+
+	} else { // set or clear RS pin (parallel mode)
+		rs ? *_RS_PORT |= _RS_BIT : *_RS_PORT &= ~_RS_BIT;
+	}
+
+	if (_bit_mode == MODE_4) {
+		_transfer4bits (data >> 4); // send top half of byte
+		_transfer4bits (data & 0x0F); // send bottom half of byte
+
+	} else {
+		_transfer8bits (data); // send all 8 bits
+	}
 }
 
 void LiquidCrystal::_setRW (uint8_t rw)
@@ -498,33 +616,16 @@ void LiquidCrystal::_setRW (uint8_t rw)
 	}
 }
 
-// write either command or data
-void LiquidCrystal::_send (uint8_t data, uint8_t rs)
-{
-	if (_serial_mode) { // set or clear RS bit in serial command byte
-		rs ? _serial_cmd |= RSBIT : _serial_cmd &= ~RSBIT;
-
-	} else { // set or clear RS pin (parallel mode)
-		rs ? *_RS_PORT |= _RS_BIT : *_RS_PORT &= ~_RS_BIT;
-	}
-
-	if (_bit_mode == MODE_4) {
-		_transfer4bits (data >> 4); // send top half
-		_transfer4bits (data & 0x0F); // send bottom half
-
-	} else {
-		_transfer8bits (data); // send all 8 bits
-	}
-}
-
 // 4 bit mode is only for HD44780 "nibble mode". SPI transfers are always 8 bit.
 void LiquidCrystal::_transfer4bits (uint8_t data)
 {
-	uint8_t n = 4; // bit count (parallel mode only)
+	_y = 4;
 	_setRW (_WRITE); // set pin to "write"
-	while (n--) { // 4 bits parallel
-		(data & _BV (n)) ? *_DATA_PORT[n + 4] |= _BIT_MASK[n + 4] : *_DATA_PORT[n + 4] &= ~_BIT_MASK[n + 4];
+
+	while (_y--) { // 4 bits parallel
+		(data & _BV (_y)) ? *_DATA_PORT[_y + 4] |= _BIT_MASK[_y + 4] : *_DATA_PORT[_y + 4] &= ~_BIT_MASK[_y + 4];
 	}
+
 	*_EN_PORT |= _EN_BIT; // assert "enable" (strobe in the data nibble)
 	_delay_ns (500); // min 450 ns (hd44780u datasheet pg. 49)
 	*_EN_PORT &= ~_EN_BIT; // de-assert "enable"
@@ -533,18 +634,22 @@ void LiquidCrystal::_transfer4bits (uint8_t data)
 
 void LiquidCrystal::_transfer8bits (uint8_t data)
 {
-	uint8_t n = 8; // bit count (parallel mode only)
+	_y = 8; // bit count (parallel mode only)
 	_setRW (_WRITE); // set bit or pin to "write" as appropriate
+
 	if (_serial_mode) {
 		_serial_IO ((_serial_cmd << 8) | data); // send command & data as one 16 bit packet
+
 	} else {
-		while (n--) { // 8 bits parallel
-			(data & _BV (n)) ? *_DATA_PORT[n] |= _BIT_MASK[n] : *_DATA_PORT[n] &= ~_BIT_MASK[n];
+		while (_y--) { // 8 bits parallel
+			(data & _BV (_y)) ? *_DATA_PORT[_y] |= _BIT_MASK[_y] : *_DATA_PORT[_y] &= ~_BIT_MASK[_y];
 		}
+
 		*_EN_PORT |= _EN_BIT; // assert "enable" (strobe in the data byte)
 		_delay_ns (500); // min 450 ns (hd44780u datasheet pg. 49)
 		*_EN_PORT &= ~_EN_BIT; // de-assert "enable"
 	}
+
 	_setRW (_READ); // set bit or pin to "read" as appropriate
 }
 
@@ -553,16 +658,18 @@ void LiquidCrystal::_transfer8bits (uint8_t data)
 // and write. currently received data isn't used anywhere
 uint8_t LiquidCrystal::_serial_IO (uint16_t data)
 {
-	uint8_t bits = 16;
+	_z = 16;
 	*_STB_PORT &= ~_STB_BIT; // assert strobe (chip select)
-	while (bits--) { // write out bits 15 thru 0
+
+	while (_z--) { // write out bits 15 thru 0
 		*_SCK_PORT &= ~_SCK_BIT; // sck low
 		*_SIO_DDR |= _SIO_BIT; // siso DDR as output
-		data & _BV (bits) ? *_SIO_PORT |= _SIO_BIT : *_SIO_PORT &= ~_SIO_BIT; // send 0 or 1 as appropriate
+		data &_BV (_z) ? *_SIO_PORT |= _SIO_BIT : *_SIO_PORT &= ~_SIO_BIT;  // send 0 or 1 as appropriate
 		*_SCK_PORT |= _SCK_BIT; // sck high
 		*_SIO_DDR &= ~_SIO_BIT; // siso DDR as input
-		*_SIO_PIN ? data |= _BV (bits) : data &= ~_BV (bits); // read the pin
+		*_SIO_PIN ? data |= _BV (_z) : data &= ~_BV (_z); // read the pin
 	}
+
 	*_STB_PORT |= _STB_BIT; // de-assert strobe (chip select)
 	// we always leave the data line as an input upon exit
 	return data;
