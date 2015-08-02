@@ -14,7 +14,7 @@ ___
 
 <a href="#"><img width="414" height="190" src="https://camo.githubusercontent.com/032e614b218d67c3ff1f6b1fafa3f86b99062ea2/687474703a2f2f656c656374726f6e6963666f7270617373696f6e2e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30342f646973686974616368692e6a7067" /></a>
 
-
+<p>&nbsp;</p>
 
 <sub><b>(Typical VFD Display)</b></sub>
 
