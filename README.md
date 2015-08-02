@@ -1,6 +1,11 @@
 LiquidCrystal
 =============
-Arduino drivers for Hitachi HD44780 compatible LCD/VFD displays, including serial interface display devices such as the Noritake series of Hitachi compatible VFD displays (CU20049, etc...)
+Arduino drivers for Hitachi HD44780 compatible LCD/VFD displays.
+
+Changes include direct port access VS digitalWrite and pinMode, the addition of SPI code to support serial interface LCD/VFD devices such as the Noritake series of Hitachi HD44780 compatible VFD displays (CU20049, etc...).
+
+Also several new functions have been added such as character code support (for example, a carriage return character homes the cursor, a linefeed drops down to the next line, etc...). It is also possible to read, from the driver, the current cursor position as row and column, making it easier to locate the cursor and update individual areas of the display.
+
 
 <a href="#"><img width="414" height="190" src="https://camo.githubusercontent.com/032e614b218d67c3ff1f6b1fafa3f86b99062ea2/687474703a2f2f656c656374726f6e6963666f7270617373696f6e2e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30342f646973686974616368692e6a7067" /></a>
 
