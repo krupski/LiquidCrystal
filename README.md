@@ -6,6 +6,8 @@ Changes include direct port access vs digitalWrite and pinMode, the addition of 
 
 Also several new functions have been added such as character code support (for example, a carriage return character homes the cursor, a linefeed drops down to the next line, etc...). It is also possible to read, from the driver, the current cursor position as row and column, making it easier to locate the cursor and update individual areas of the display.
 
+
+
 ___
 (Typical LCD Display)
 
