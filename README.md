@@ -2,7 +2,7 @@ LiquidCrystal
 =============
 Arduino drivers for standard LCD displays and Noritake HD44780 compatible LCD/VFD displays.
 
-Changes include direct port access instead of "digitalWrite" and "pinMode", the addition of SPI code to support serial interface devices such as the Noritake series of Hitachi HD44780 compatible VFD (<b>V</b>acuum <b>F</b>luorescent <b>D</b>isplay) modules (CU20049, etc...).
+Changes include direct port access instead of "digitalWrite" and "pinMode" and the addition of SPI code to support serial interface devices such as the Noritake series of Hitachi HD44780 compatible VFD (<b>V</b>acuum <b>F</b>luorescent <b>D</b>isplay) modules (CU20049, etc...).
 
 Also several new functions have been added such as character code support (for example, a carriage return character homes the cursor, a linefeed drops down to the next line, etc...). It is also possible to read, from the driver, the current cursor position as row and column, making it easier to locate the cursor and update individual areas of the display.
 
