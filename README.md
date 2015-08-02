@@ -1,6 +1,6 @@
 LiquidCrystal
 =============
-Arduino drivers for Hitachi HD44780 compatible LCD/VFD displays.
+Arduino drivers for standard LCD displays and Noritake&reg; HD44780 compatible LCD/VFD displays.
 
 Changes include direct port access instead of "digitalWrite" and "pinMode", the addition of SPI code to support serial interface devices such as the Noritake series of Hitachi HD44780 compatible VFD (<b>V</b>acuum <b>F</b>luorescent <b>D</b>isplay) modules (CU20049, etc...).
 
