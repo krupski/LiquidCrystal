@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 02 August 2015
+//  Last update: 30 August 2015
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -33,13 +33,15 @@
 #include <util/delay.h> // for _delay_us() and _delay_ms()
 
 #ifndef _delay_ns
-  #define _delay_ns(X) _delay_us(X/1e3f) // _delay_ns() if we don't have it
+  #define _delay_ns(X) delayMicroseconds(X/1e3f) // _delay_ns() if we don't have it
 #endif
 
-#if defined(pgm_read_byte_far)
-  #define PGM_READ pgm_read_byte_far
-#else
-  #define PGM_READ pgm_read_byte_near
+#ifndef PGM_READ
+  #ifndef pgm_read_byte_far
+    #define PGM_READ pgm_read_byte_far
+  #else
+    #define PGM_READ pgm_read_byte_near
+  #endif
 #endif
 
 // hd44780 commands
@@ -171,15 +173,11 @@ class LiquidCrystal : public Stream {
     void _send_cmd (uint8_t);
     void _send_data (uint8_t);
     void _send (uint8_t, uint8_t);
-    void _setRW (uint8_t);
     void _transfer4bits (uint8_t);
     void _transfer8bits (uint8_t);
-    uint8_t _serial_IO (uint16_t);
+    uint8_t _transfer_SPI (uint16_t, uint8_t);
 
     // variables
-	uint8_t _x; // generic
-	uint8_t _y; // ditto
-	uint16_t _z; // 16 bit generic
     uint8_t _cur_x;
     uint8_t _cur_y;
     uint8_t _numcols;
