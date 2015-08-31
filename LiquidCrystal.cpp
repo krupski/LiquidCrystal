@@ -122,7 +122,7 @@ void LiquidCrystal::init (
 			_RST_DDR = portModeRegister (n);
 			*_RST_PORT &= ~_RST_BIT; // lower reset pin
 			*_RST_DDR |= _RST_BIT; // set it as output (assert reset)
-			_delay_us (5000); // delay 5 msec
+			delayMicroseconds (5000); // delay 5 msec
 			*_RST_PORT |= _RST_BIT; // raise reset pin
 			*_RST_DDR &= ~_RST_BIT; // set it as input_pullup (de-assert reset)
 		}
@@ -208,7 +208,7 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 
 	// we need at least 40ms after power rises above 2.7V before sending
 	// commands. Arduino can turn on way before 4.5V so we'll wait 50
-	_delay_us (50000);
+	delayMicroseconds (50000);
 
 	x = _bit_mode; // save actual bitmode
 
@@ -219,13 +219,13 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 
 	// send reset sequence
 	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_us (4500); // wait min 4.1 ms
+	delayMicroseconds (4500); // wait min 4.1 ms
 
 	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_us (4500); // wait min 4.1 ms
+	delayMicroseconds (4500); // wait min 4.1 ms
 
 	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_us (125); // wait min 100 us
+	delayMicroseconds (125); // wait min 100 us
 
 	// finish display reset
 	_send_cmd (LCD_FUNCTIONSET | _displayFunction);
