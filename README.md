@@ -12,7 +12,7 @@ Also several new functions have been added such as character code support (for e
 ___
 <sub><b>(Typical LCD Display)</b></sub>
 
-<a href="#"><img width="414" height="190"  src="http://www.hobbytent.com/other/files/lcd.png" /></a>
+<a href="#"><img width="414" height="190" src="https://camo.githubusercontent.com/4d5061ef99174fa8c0b5ed0b60f456e6045e34bf/687474703a2f2f7777772e686f62627974656e742e636f6d2f6f746865722f66696c65732f6c63642e706e67" /></a>
 
 <p>&nbsp;</p>
 
