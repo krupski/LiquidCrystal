@@ -12,7 +12,7 @@ Also several new functions have been added such as character code support (for e
 ___
 <sub><b>(Typical LCD Display)</b></sub>
 
-<a href="#"><img width="414" height="190" src="https://camo.githubusercontent.com/032e614b218d67c3ff1f6b1fafa3f86b99062ea2/687474703a2f2f656c656374726f6e6963666f7270617373696f6e2e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30342f646973686974616368692e6a7067" /></a>
+<a href="#"><img width="414" src="https://i.ytimg.com/vi/eX60HCOwmy4/hqdefault.jpg" /></a>
 
 <p>&nbsp;</p>
 
