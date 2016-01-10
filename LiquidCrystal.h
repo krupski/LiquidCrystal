@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 30 August 2015
+//  Last update: 02 August 2015
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -28,20 +28,6 @@
   #include <WProgram.h>
 #else
   #include <Arduino.h>
-#endif
-
-#include <util/delay.h> // for _delay_us() and _delay_ms()
-
-#ifndef _delay_ns
-  #define _delay_ns(X) delayMicroseconds(X/1e3f) // _delay_ns() if we don't have it
-#endif
-
-#ifndef PGM_READ
-  #ifndef pgm_read_byte_far
-    #define PGM_READ pgm_read_byte_far
-  #else
-    #define PGM_READ pgm_read_byte_near
-  #endif
 #endif
 
 // hd44780 commands
@@ -111,17 +97,23 @@ class LiquidCrystal : public Stream {
     LiquidCrystal (uint8_t, uint8_t, uint8_t);
     // serial, with reset
     LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t);
+
     // 4 bit parallel, no r/w
     LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
     // 4 bit parallel, with r/w
     LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+    // 4 bit parallel, with r/w, with reset
+    LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+
     // 8 bit parallel, no r/w
     LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
-    // 4 bit parallel, with r/w
+    // 8 bit parallel, with r/w
     LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+    // 8 bit parallel, with r/w, with reset
+    LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 
     // initialization
-    void init (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+    void init (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
     void begin (uint8_t, uint8_t, uint8_t = LCD_5x8DOTS);
 
     // user commands
@@ -160,6 +152,7 @@ class LiquidCrystal : public Stream {
     virtual int peek (void);
     virtual int read (void);
     virtual void flush (void);
+	operator bool (void);
 
 	// universal write used by Print
     virtual size_t write (uint8_t);
@@ -167,15 +160,23 @@ class LiquidCrystal : public Stream {
 
   private:
     // private code begins here
+	#ifdef pgm_read_byte_far
+	#define PGM_READ pgm_read_byte_far
+	#else
+	#define PGM_READ pgm_read_byte_near
+	#endif
+	void _delay_usec (uint32_t);
     size_t _backSpace (void);
     size_t _lineFeed (void);
     size_t _carriageReturn (void);
+	size_t _doTabs (uint8_t);
     void _send_cmd (uint8_t);
     void _send_data (uint8_t);
     void _send (uint8_t, uint8_t);
     void _transfer4bits (uint8_t);
     void _transfer8bits (uint8_t);
-    uint8_t _transfer_SPI (uint16_t, uint8_t);
+	void _pulseEnable (void);
+    uint8_t _transfer_SPI (uint8_t);
 
     // variables
     uint8_t _cur_x;
