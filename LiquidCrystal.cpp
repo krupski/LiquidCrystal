@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 02 August 2015
+//  Last update: 31 January 2016
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -27,14 +27,14 @@
 LiquidCrystal::LiquidCrystal (
 	uint8_t siso, uint8_t stb, uint8_t sck
 ) {
-	init (MODE_S, siso, stb, sck, NO_RST, 0, 0, 0, 0, 0, 0, 0, 0);
+	init (MODE_S, siso, stb, sck, NO_RST, 0, 0, 0, 0, 0, 0, 0, NO_RST);
 }
 
 // SPI serial interface, hardware reset is enabled and available (D0 pin is used for reset)
 LiquidCrystal::LiquidCrystal (
 	uint8_t siso, uint8_t stb, uint8_t sck, uint8_t reset
 ) {
-	init (MODE_S, siso, stb, sck, reset, 0, 0, 0, 0, 0, 0, 0, 0);
+	init (MODE_S, siso, stb, sck, reset, 0, 0, 0, 0, 0, 0, 0, NO_RST);
 }
 
 // parallel interface 4 bits without active r/w (must tie r/w low manually)
@@ -42,7 +42,7 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t rs, /* no rw */ uint8_t en,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
 ) {
-	init (MODE_4, rs, NO_RW, en, 0, 0, 0, 0, d4, d5, d6, d7, 0);
+	init (MODE_4, rs, NO_RW, en, 0, 0, 0, 0, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 4 bits with active r/w
@@ -50,7 +50,7 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t rs, uint8_t rw, uint8_t en,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
 ) {
-	init (MODE_4, rs, rw, en, 0, 0, 0, 0, d4, d5, d6, d7, 0);
+	init (MODE_4, rs, rw, en, 0, 0, 0, 0, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 4 bits with active r/w and active reset
@@ -68,7 +68,7 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
 ) {
-	init (MODE_8, rs, NO_RW, en, d0, d1, d2, d3, d4, d5, d6, d7, 0);
+	init (MODE_8, rs, NO_RW, en, d0, d1, d2, d3, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 8 bits with active r/w
@@ -77,7 +77,7 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
 ) {
-	init (MODE_8, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7, 0);
+	init (MODE_8, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 8 bits with active r/w and active reset
@@ -107,11 +107,12 @@ void LiquidCrystal::init (
 		_serial_mode = 1; // flag "we are in serial mode"
 		_reset_pin = d0; // alternate use of pin
 
-		// template for serial command. note that bit 1 (RS) and bit 2 (RW)
-		// are dynamically set or cleared as required by the driver itself.
-		_serial_cmd = (0b11111110);
-		_serial_cmd &= ~RSBIT; // initial setting RS = LOW = command
-		_serial_cmd &= ~RWBIT; // initial setting RW = LOW = write
+		// serial command byte template (Noritake CU20049-UW2J manual pg. 12)
+		// bit [7...3] = 1
+		// bit [2] = read/write (1=read,0=write)
+		// bit [1] = register select (1=data,0=command)
+		// bit [0] = 0
+		_serial_cmd = 0b11111000;
 
 		n = digitalPinToPort (rs); // SISO pin is on RS
 		_SIO_BIT = digitalPinToBitMask (rs);
@@ -180,7 +181,7 @@ void LiquidCrystal::init (
 			*_RW_DDR |= _RW_BIT; // ddr = output
 		}
 
-		if (_reset_pin) { // if we are using reset...
+		if (_reset_pin != NO_RST) { // if we are using reset...
 			n = digitalPinToPort (v0); // RESET pin is on v0
 			_RST_BIT = digitalPinToBitMask (v0);
 			_RST_PORT = portOutputRegister (n);
@@ -211,6 +212,11 @@ void LiquidCrystal::init (
 	begin (16, 1);
 }
 
+void LiquidCrystal::begin (uint8_t cols, uint8_t rows)
+{
+	begin (cols, rows, 0);
+}
+
 void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 {
 	uint8_t x;
@@ -221,72 +227,63 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 	// setup default DDRAM offsets
 	setRowOffsets (0x00, 0x40, 0x14, 0x54);
 
-	_displayFunction = 0; // init template
-
-	// build the _displayFunction template
-	if (_bit_mode == MODE_4) {
-		_displayFunction |= (LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS);
-
-	} else {
-		_displayFunction |= (LCD_8BITMODE | LCD_1LINE | LCD_5x8DOTS);
-	}
-
-	if ((dotsize != LCD_5x8DOTS) && (_numrows == 1)) {
-		_displayFunction |= LCD_5x10DOTS;
-	}
-
-	if (_numrows > 1) {
-		_displayFunction |= LCD_2LINE;
-	}
-
 	// we need at least 40ms after power rises above 2.7V before sending
 	// commands. Arduino can turn on way before 4.5V so we'll wait 50
 	_delay_usec (50000);
 
 	x = _bit_mode; // save actual bitmode
+	_bit_mode = MODE_8; // force reset to be 8 bit
 
-	// send initialization in 8 bit mode via _send_cmd
-	if (_bit_mode == MODE_4) {
-		_bit_mode = MODE_8; // force reset to be an 8 bit write
-	}
-
-	// send reset sequence
-	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_usec (4500); // wait min 4.1 ms
-
-	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_usec (4500); // wait min 4.1 ms
-
-	_send_cmd (LCD_FUNCTIONSET | LCD_8BITMODE);
-	_delay_usec (125); // wait min 100 us
-
-	// finish display reset
-	_send_cmd (LCD_FUNCTIONSET | _displayFunction);
-
-	_bit_mode = x; // restore actual bitmode
-
-	///////////////////////////////////////////////////////////////////
-	/////////// from here on _send_cmd auto-selects bitmode ///////////
-	///////////////////////////////////////////////////////////////////
+	// build _displayMode template
+	// default: increment mode, no shift
+	_displayMode = (ENTRYMODESET | INCREMENT);
 
 	// build _displayControl template
-	_displayControl = 0; // init template
-	_displayControl |= (LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF);
-	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
+	// default: display off, cursor off, blink off
+	_displayControl = (DISPLAYCONTROL);
 
-	// build _displayEntryMode template
-	_displayEntryMode = 0; // init template
-	_displayEntryMode |= LCD_ENTRYLEFT | LCD_ENTRYSHIFTDEC;
-	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+	// build _displayCursor template
+	// default: cursor move, cursor moves right
+	_displayCursor = (CURSORSHIFT | MOVERIGHT);
 
-	setBrightness (100);
-	// we're ready to go!
-	clearScreen ();
+	// build _displayFunction template
+	// default: 8 bit, 1 line, 5 x 8 character
+	_displayFunction = (FUNCTIONSET | BITMODE8);
+
+	// send reset sequence
+	_send_cmd (_displayFunction);
+	_delay_usec (50000);
+	_send_cmd (_displayFunction);
+	_delay_usec (200);
+	_send_cmd (_displayFunction);
+	_delay_usec (200);
+
+	if (x == MODE_4) { // if actual bitmode is 4 then clear the 8 bit flag
+		_displayFunction &= ~BITMODE8;
+	}
+
+	if (_numrows > 1) {
+		_displayFunction |= LINES2;
+	}
+
+	if (dotsize) {
+		_displayFunction |= DOTS5X10;
+	}
+
+	// finish display reset
+	_send_cmd (_displayFunction); // set the interface bit mode
+	_delay_usec (200);
+
+	_bit_mode = x; // now driver uses 4 or 8 bits
+
+	_send_cmd (_displayMode); // entry mode set
+	setDisplay (1); // turn display on
+	clearScreen(); // clear display
 }
 
 void LiquidCrystal::setBrightness (uint8_t pct)
 {
-	uint8_t brite = 0b11;
+	uint8_t brite = 0x03;
 	uint16_t x = 1000;
 
 	// constrain percent
@@ -294,7 +291,10 @@ void LiquidCrystal::setBrightness (uint8_t pct)
 
 	// shut off HV inverter & filament on VFD displays
 	// if brightness of "0" is selected.
-	setDisplay (pct ? 1 : 0);
+	if (!pct) {
+		setDisplay (0);
+		return;
+	}
 
 	// multiply everything by 10 so fractional
 	// numbers are calculated as integers
@@ -307,14 +307,14 @@ void LiquidCrystal::setBrightness (uint8_t pct)
 	}
 
 	// execute a function set
-	_send_cmd (LCD_FUNCTIONSET | _displayFunction);
+	_send_cmd (FUNCTIONSET);
 	// send the brightness control bits - 0b00:100%, 0b01:75%, 0b10:50%, 0b11:25%
 	_send_data (brite); // set brightness (VFD only)
 }
 
 void LiquidCrystal::home (void)
 {
-	_send_cmd (LCD_RETURNHOME);
+	_send_cmd (RETURNHOME);
 	_delay_usec (20000); // min 15.2 ms!!!
 	setCursor (0, 0);
 }
@@ -326,7 +326,7 @@ void LiquidCrystal::clearScreen (void)
 
 void LiquidCrystal::clear (void)
 {
-	_send_cmd (LCD_CLEARDISPLAY);
+	_send_cmd (CLEARDISPLAY);
 	_delay_usec (20000); // min 15.2 ms!!!
 	setCursor (0, 0);
 }
@@ -349,16 +349,25 @@ void LiquidCrystal::setLine (uint8_t x, uint8_t y)
 
 void LiquidCrystal::setCursor (uint8_t x, uint8_t y)
 {
-	_cur_x = (x % _numcols); // record cursor X pos
-	_cur_y = (y % _numrows); // record cursor Y pos
-
-	_send_cmd (LCD_SETDDRAMADDR | (_cur_x + _row_offsets[_cur_y]));
+	_cur_x = x; // record cursor X pos
+	_cur_y = y; // record cursor Y pos
+	_send_cmd (SETDDRAMADDR | (_cur_x + _row_offsets[_cur_y]));
 }
 
 void LiquidCrystal::getCursor (uint8_t &x, uint8_t &y)
 {
 	x = _cur_x;
 	y = _cur_y;
+}
+
+void LiquidCrystal::pushCursor (void)
+{
+	getCursor (_save_x, _save_y);
+}
+
+void LiquidCrystal::popCursor (void)
+{
+	setCursor (_save_x, _save_y);
 }
 
 // compatibility with original LiquidCrystal functions
@@ -417,88 +426,98 @@ void LiquidCrystal::autoscroll (void)
 // Turn the display on/off (quickly)
 void LiquidCrystal::setDisplay (uint8_t on)
 {
-	on ? _displayControl |= LCD_DISPLAYON : _displayControl &= ~LCD_DISPLAYON;
-	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
+	on ? _displayControl |= DISPLAYON : _displayControl &= ~DISPLAYON;
+	_send_cmd (_displayControl);
 }
 
 // Turns the underline cursor on/off
 void LiquidCrystal::setUnderline (uint8_t on)
 {
-	on ? _displayControl |= LCD_CURSORON : _displayControl &= ~LCD_CURSORON;
-	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
+	on ? _displayControl |= CURSORON : _displayControl &= ~CURSORON;
+	_send_cmd (_displayControl);
 }
 
 // Turn on and off the blinking cursor
 void LiquidCrystal::setBlink (uint8_t on)
 {
-	on ? _displayControl |= LCD_BLINKON : _displayControl &= ~LCD_BLINKON;
-	_send_cmd (LCD_DISPLAYCONTROL | _displayControl);
+	on ? _displayControl |= BLINKON : _displayControl &= ~BLINKON;
+	_send_cmd (_displayControl);
 }
 
 void LiquidCrystal::setAutoscroll (uint8_t on)
 {
-	on ? _displayEntryMode |= LCD_ENTRYSHIFTINC : _displayEntryMode &= ~LCD_ENTRYSHIFTINC;
-	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+	on ? _displayMode |= DISPLAYSHIFT : _displayMode &= ~DISPLAYSHIFT;
+	_send_cmd (_displayMode);
 }
 
 // These commands scroll the display without changing the RAM
 void LiquidCrystal::scrollDisplayLeft (void)
 {
-	_send_cmd (LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
+	_displayCursor |= (CURSORSHIFT | DISPLAYMOVE | MOVERIGHT);
+	_displayCursor &= ~MOVERIGHT;
+	_send_cmd (_displayCursor);
 }
 
 void LiquidCrystal::scrollDisplayRight (void)
 {
-	_send_cmd (LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
+	_displayCursor |= (CURSORSHIFT | DISPLAYMOVE | MOVERIGHT);
+	_send_cmd (_displayCursor);
 }
 
 // This is for text that flows Left to Right
 void LiquidCrystal::leftToRight (void)
 {
-	_displayEntryMode |= LCD_ENTRYLEFT;
-	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+	_displayMode |= INCREMENT;
+	_send_cmd (_displayMode);
 }
 
 // This is for text that flows Right to Left
 void LiquidCrystal::rightToLeft (void)
 {
-	_displayEntryMode &= ~LCD_ENTRYLEFT;
-	_send_cmd (LCD_ENTRYMODESET | _displayEntryMode);
+	_displayMode &= ~INCREMENT;
+	_send_cmd (_displayMode);
 }
 
-// Allows us to fill the first 8 CGRAM locations
-// with custom characters
-// Note: "print"ing 0x00 will not work because 0 is end of line.
-// use "write" instead.
-void LiquidCrystal::createChar (uint8_t location, const uint8_t *charmap)
+// custom bitmaps in SRAM
+void LiquidCrystal::createChar (uint8_t addr, const uint8_t *bitmap)
 {
 	uint8_t n;
-	location &= 0x07; // we only have 8 locations 0-7
+	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (LCD_SETCGRAMADDR | (location * 8));
+	_send_cmd (SETCGRAMADDR | (addr * 8));
 
 	for (n = 0; n < 8; n++) {
-		_send_data (*(charmap + n)); // 8 bytes to a char (but only 5 bits)
+		_send_data (bitmap[n]); // 8 bytes to a char (but only 5 bits)
 	}
 
 	home();  // make sure cursor isn't fubar
 }
 
-void LiquidCrystal::createChar_P (uint8_t location, const uint8_t *charmap)
-{
-	// convert 16 bit PROGMEM pointer into a 32 bit address
-	createChar_P (location, (const uint32_t) charmap);
-}
-
-void LiquidCrystal::createChar_P (uint8_t location, const uint32_t charmap)
+// custom bitmaps in PROGMEM
+void LiquidCrystal::createChar_P (uint8_t addr, const uint8_t *bitmap)
 {
 	uint8_t n;
-	location &= 0x07; // we only have 8 locations 0-7
+	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (LCD_SETCGRAMADDR | (location * 8));
+	_send_cmd (SETCGRAMADDR | (addr * 8));
 
 	for (n = 0; n < 8; n++) {
-		_send_data (PGM_READ (charmap + n));
+		_send_data (PGM_READ (bitmap + n));
+	}
+
+	home();  // make sure cursor isn't fubar
+}
+
+// custom bitmaps in EEPROM
+void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap)
+{
+	uint8_t n;
+	addr %= 0x08; // we only have 8 addrs 0-7
+
+	_send_cmd (SETCGRAMADDR | (addr * 8));
+
+	for (n = 0; n < 8; n++) {
+		_send_data (eeprom_read_byte (bitmap + n));
 	}
 
 	home();  // make sure cursor isn't fubar
@@ -588,13 +607,10 @@ size_t LiquidCrystal::write (uint8_t data)
 
 void LiquidCrystal::_delay_usec (uint32_t delay)
 {
-	// should be 16 nops, but is only 9 to
-	// account for loop counting overhead.
 	while (delay--) {
 		__asm__ __volatile__ (
-			" nop\n" " nop\n" " nop\n"
-			" nop\n" " nop\n" " nop\n"
-			" nop\n" " nop\n" " nop\n"
+			" nop\n" " nop\n" " nop\n" " nop\n" " nop\n"
+			" nop\n" " nop\n" " nop\n" " nop\n" " nop\n"
 		);
 	}
 }
@@ -679,29 +695,32 @@ void LiquidCrystal::_send (uint8_t data, uint8_t rs)
 {
 	if (_serial_mode) { // set or clear RS bit in serial command byte
 		rs ? _serial_cmd |= RSBIT : _serial_cmd &= ~RSBIT;
+		_serial_cmd &= ~RWBIT; // write mode
+		*_STB_PORT &= ~_STB_BIT; // assert strobe
+		_serialWrite (_serial_cmd); // send command via SPI
+		__asm__ __volatile__ ( // turn-around delay
+			" nop\n"
+		);
+		_serialWrite (data); // send data via SPI
+		*_STB_PORT |= _STB_BIT; // de-assert strobe
 
 	} else { // set or clear RS pin (parallel mode)
 		rs ? *_RS_PORT |= _RS_BIT : *_RS_PORT &= ~_RS_BIT;
-	}
+		if (_rw_pin != NO_RW) {
+			*_RW_PORT &= ~_RW_BIT; // set r/w low = write
+		}
+		if (_bit_mode == MODE_4) {
+			_send4bits (data >> 4); // send top half of byte
+			_send4bits (data & 0x0F); // send bottom half of byte
 
-	if (_bit_mode == MODE_4) {
-		_transfer4bits (data >> 4); // send top half of byte
-		_transfer4bits (data & 0x0F); // send bottom half of byte
-
-	} else {
-		if (_serial_mode) {
-			*_STB_PORT &= ~_STB_BIT; // assert strobe
-			_transfer_SPI (_serial_cmd); // send command via SPI
-			_transfer_SPI (data); // send data via SPI
-			*_STB_PORT |= _STB_BIT; // de-assert strobe
 		} else {
-			_transfer8bits (data); // send command or data via parallel
+			_send8bits (data); // send command or data via parallel
 		}
 	}
 }
 
-// 4 bit mode (we send top 4 bits, then bottom 4)
-void LiquidCrystal::_transfer4bits (uint8_t data)
+// parallel 4 bit mode (we send top 4 bits, then bottom 4)
+void LiquidCrystal::_send4bits (uint8_t data)
 {
 	uint8_t n = 4; // bit count
 	while (n--) { // 4 bits parallel
@@ -710,8 +729,8 @@ void LiquidCrystal::_transfer4bits (uint8_t data)
 	_pulseEnable (); // clock in the data
 }
 
-// 8 bit mode (we send all 8 bits at once)
-void LiquidCrystal::_transfer8bits (uint8_t data)
+// parallel 8 bit mode (we send all 8 bits at once)
+void LiquidCrystal::_send8bits (uint8_t data)
 {
 	uint8_t n = 8; // bit count
 	while (n--) { // 8 bits parallel
@@ -730,19 +749,34 @@ void LiquidCrystal::_pulseEnable (void)
 	_delay_usec (100);
 }
 
-// serial I/O for Noritake CUU displays
-// this is like SPI, but using only one pin for both read
-// and write. currently received data isn't used anywhere
-uint8_t LiquidCrystal::_transfer_SPI (uint8_t data)
+// serial "SPI-like" write
+void LiquidCrystal::_serialWrite (uint8_t data)
 {
 	uint8_t bits = 8;
+	*_SIO_DDR |= _SIO_BIT; // set siso DDR as output
 	while (bits--) { // write out bits
-		*_SCK_PORT &= ~_SCK_BIT; // set sck low (latch read, begin write)
-		*_SIO_DDR |= _SIO_BIT; // set siso DDR as output
 		data &_BV(bits) ? *_SIO_PORT |= _SIO_BIT : *_SIO_PORT &= ~_SIO_BIT; // write bit
-		*_SCK_PORT |= _SCK_BIT; // set sck high (latch write, begin read)
-		*_SIO_DDR &= ~_SIO_BIT; // set siso DDR as input
-		*_SIO_PIN ? data |= _BV(bits) : data &= ~_BV(bits); // read bit
+		*_SCK_PORT &= ~_SCK_BIT; // set sck low
+		__asm__ __volatile__ (
+			" nop\n"
+		);
+		*_SCK_PORT |= _SCK_BIT; // set sck high
+	}
+}
+
+// serial "SPI-like" read
+uint8_t LiquidCrystal::_serialRead (void)
+{
+	uint8_t bits = 8;
+	uint8_t data;
+	*_SIO_DDR &= ~_SIO_BIT; // set siso DDR as input
+	while (bits--) { // write out bits
+		*_SCK_PORT &= ~_SCK_BIT; // set sck low
+		__asm__ __volatile__ (
+			" nop\n"
+		);
+		*_SCK_PORT |= _SCK_BIT; // set sck high
+		*_SIO_PIN ? data |= _BV (bits) : data &= ~_BV (bits); // read bit
 	}
 	return data;
 }
