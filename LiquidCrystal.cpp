@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 05 February 2016
+//  Last update: 06 February 2016
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
