@@ -484,7 +484,7 @@ void LiquidCrystal::createChar (uint8_t addr, const uint8_t *bitmap)
 	uint8_t n;
 	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (SETCGRAMADDR | (addr * 8));exit
+	_send_cmd (SETCGRAMADDR | (addr * 8));
 
 	for (n = 0; n < 8; n++) {
 		_send_data (bitmap[n]); // 8 bytes to a char (but only 5 bits)
