@@ -4,7 +4,7 @@
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
 //  Copyright (c) 2015 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 06 February 2016
+//  Last update: 31 January 2016
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -484,7 +484,7 @@ void LiquidCrystal::createChar (uint8_t addr, const uint8_t *bitmap)
 	uint8_t n;
 	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (SETCGRAMADDR | (addr * 8));
+	_send_cmd (SETCGRAMADDR | (addr * 8));exit
 
 	for (n = 0; n < 8; n++) {
 		_send_data (bitmap[n]); // 8 bytes to a char (but only 5 bits)
@@ -517,7 +517,7 @@ void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap)
 	_send_cmd (SETCGRAMADDR | (addr * 8));
 
 	for (n = 0; n < 8; n++) {
-		_send_data (eeprom_read_byte (bitmap + n));
+		_send_data (eeprom_read_byte ((const uint8_t *)(bitmap + n)));
 	}
 
 	home();  // make sure cursor isn't fubar
