@@ -698,9 +698,6 @@ void LiquidCrystal::_send (uint8_t data, uint8_t rs)
 		_serial_cmd &= ~RWBIT; // write mode
 		*_STB_PORT &= ~_STB_BIT; // assert strobe
 		_serialWrite (_serial_cmd); // send command via SPI
-		__asm__ __volatile__ ( // turn-around delay
-			" nop\n"
-		);
 		_serialWrite (data); // send data via SPI
 		*_STB_PORT |= _STB_BIT; // de-assert strobe
 
@@ -755,9 +752,10 @@ void LiquidCrystal::_serialWrite (uint8_t data)
 	uint8_t bits = 8;
 	*_SIO_DDR |= _SIO_BIT; // set siso DDR as output
 	while (bits--) { // write out bits
-		data &_BV(bits) ? *_SIO_PORT |= _SIO_BIT : *_SIO_PORT &= ~_SIO_BIT; // write bit
+		data & _BV(bits) ? *_SIO_PORT |= _SIO_BIT : *_SIO_PORT &= ~_SIO_BIT; // write bit
 		*_SCK_PORT &= ~_SCK_BIT; // set sck low
 		__asm__ __volatile__ (
+			" nop\n" // 125 nsec
 			" nop\n"
 		);
 		*_SCK_PORT |= _SCK_BIT; // set sck high
@@ -770,13 +768,14 @@ uint8_t LiquidCrystal::_serialRead (void)
 	uint8_t bits = 8;
 	uint8_t data;
 	*_SIO_DDR &= ~_SIO_BIT; // set siso DDR as input
-	while (bits--) { // write out bits
+	while (bits--) { // read in bits
 		*_SCK_PORT &= ~_SCK_BIT; // set sck low
 		__asm__ __volatile__ (
+			" nop\n" // 125 nsec
 			" nop\n"
 		);
 		*_SCK_PORT |= _SCK_BIT; // set sck high
-		*_SIO_PIN ? data |= _BV (bits) : data &= ~_BV (bits); // read bit
+		*_SIO_PIN & _SIO_BIT ? data |= _BV (bits) : data &= ~_BV (bits); // read bit
 	}
 	return data;
 }
