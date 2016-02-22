@@ -150,7 +150,7 @@ void LiquidCrystal::init (
 
 	} else { // parallel mode
 
-		static const uint8_t data_pin[] = {
+		const uint8_t data_pin[] = {
 			d0, d1, d2, d3, d4, d5, d6, d7
 		};
 
