@@ -133,10 +133,12 @@ class LiquidCrystal : public Stream
 		#define RSBIT          _BV(1) // register select bit
 		#define RWBIT          _BV(2) // read/write bit (1=read, 0=write)
 		// for reading flash
+		#ifndef _PGM_READ
 		#ifdef pgm_read_byte_far
-		#define PGM_READ pgm_read_byte_far
+		#define _PGM_READ pgm_read_byte_far
 		#else
-		#define PGM_READ pgm_read_byte_near
+		#define _PGM_READ pgm_read_byte_near
+		#endif
 		#endif
 		// prototypes
 		size_t _backSpace (void);

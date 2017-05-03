@@ -510,7 +510,7 @@ void LiquidCrystal::createChar_P (uint8_t addr, const uint8_t *bitmap)
 	_send_cmd (SETCGRAMADDR | (addr * 8));
 
 	for (n = 0; n < 8; n++) {
-		_send_data (PGM_READ (bitmap + n));
+		_send_data (_PGM_READ (bitmap + n));
 	}
 
 	home (); // make sure cursor isn't fubar
