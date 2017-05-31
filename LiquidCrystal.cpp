@@ -152,7 +152,7 @@ void LiquidCrystal::init (
 			_RST_DDR = portModeRegister (n);
 			*_RST_PORT &= ~_RST_BIT; // lower reset pin
 			*_RST_DDR |= _RST_BIT; // set it as output (assert reset)
-			__builtin_avr_delay_cycles ((F_CPU / 1e3) * 1); // delay 1 msec
+			__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*1); // delay 1 msec
 			*_RST_PORT |= _RST_BIT; // raise reset pin
 			*_RST_DDR &= ~_RST_BIT; // set it as input_pullup (de-assert reset)
 		}
@@ -197,7 +197,7 @@ void LiquidCrystal::init (
 			_RST_DDR = portModeRegister (n);
 			*_RST_PORT &= ~_RST_BIT; // lower reset pin
 			*_RST_DDR |= _RST_BIT; // set it as output (assert reset)
-			__builtin_avr_delay_cycles ((F_CPU / 1e3) * 1); // delay 1 msec
+			__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*1); // delay 1 msec
 			*_RST_PORT |= _RST_BIT; // raise reset pin
 			*_RST_DDR &= ~_RST_BIT; // set it as input_pullup (de-assert reset)
 		}
@@ -233,8 +233,8 @@ void LiquidCrystal::begin (int8_t cols, int8_t rows, int8_t dotsize)
 	setRowOffsets (0x00, 0x40, 0x14, 0x54);
 
 	// we need at least 40ms after power rises above 2.7V before sending
-	// commands. Arduino can turn on way before 4.5V so we'll wait 50
-	__builtin_avr_delay_cycles ((F_CPU / 1e3) * 50);
+	// commands. Arduino can turn on way before 4.5V so we'll wait 250
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*250);
 
 	x = _bit_mode; // save actual bitmode
 	_bit_mode = MODE_8; // force reset to be 8 bit
@@ -257,13 +257,13 @@ void LiquidCrystal::begin (int8_t cols, int8_t rows, int8_t dotsize)
 
 	// send reset sequence
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles ((F_CPU / 1e3) * 50);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*50);
 
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles ((F_CPU / 1e6) * 200);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*200);
 
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles ((F_CPU / 1e6) * 200);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*200);
 
 	if (x == MODE_4) { // if actual bitmode is 4 then clear the 8 bit flag
 		_displayFunction &= ~BITMODE8;
@@ -279,11 +279,18 @@ void LiquidCrystal::begin (int8_t cols, int8_t rows, int8_t dotsize)
 
 	// finish display reset
 	_send_cmd (_displayFunction); // set the interface bit mode
-	__builtin_avr_delay_cycles ((F_CPU / 1e6) * 200);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*200);
 
 	_bit_mode = x; // now driver uses 4 or 8 bits
 
 	_send_cmd (_displayMode); // entry mode set
+
+	x = 8;
+
+	while (x--) {
+		translateChar (x, 0); // initialize / clear character translate table
+	}
+
 	setDisplay (1); // turn display on
 	clearScreen (); // clear display
 }
@@ -322,7 +329,7 @@ void LiquidCrystal::setBrightness (uint8_t pct)
 void LiquidCrystal::home (void)
 {
 	_send_cmd (RETURNHOME);
-	__builtin_avr_delay_cycles ((F_CPU / 1e3) * 20); // min 15.2 ms!!!
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*20); // min 15.2 ms!!!
 	setCursor (0, 0);
 }
 
@@ -334,7 +341,7 @@ void LiquidCrystal::clearScreen (void)
 void LiquidCrystal::clear (void)
 {
 	_send_cmd (CLEARDISPLAY);
-	__builtin_avr_delay_cycles ((F_CPU / 1e3) * 20); // min 15.2 ms!!!
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*20); // min 15.2 ms!!!
 	setCursor (0, 0);
 }
 
@@ -486,76 +493,81 @@ void LiquidCrystal::rightToLeft (void)
 	_send_cmd (_displayMode);
 }
 
+void LiquidCrystal::translateChar (uint8_t addr, uint8_t charCode)
+{
+	_translateTable[(addr % 8)] = charCode;
+}
+
 // custom bitmaps in SRAM
-void LiquidCrystal::createChar (uint8_t addr, const uint8_t *bitmap)
+void LiquidCrystal::createChar (uint8_t addr, const char *bitmap, uint8_t charCode)
+{
+	createChar (addr, (const uint8_t *)(bitmap), charCode);
+}
+
+// custom bitmaps in SRAM
+void LiquidCrystal::createChar (uint8_t addr, const uint8_t *bitmap, uint8_t charCode)
 {
 	uint8_t n;
-	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (SETCGRAMADDR | (addr * 8));
+	_send_cmd (SETCGRAMADDR | ((addr % 8) * 8));
 
 	for (n = 0; n < 8; n++) {
 		_send_data (bitmap[n]); // 8 bytes to a char (but only 5 bits)
+	}
+
+	if (charCode != 255) {
+		translateChar (addr, charCode);
 	}
 
 	home (); // make sure cursor isn't fubar
 }
 
 // custom bitmaps in PROGMEM
-void LiquidCrystal::createChar_P (uint8_t addr, const uint8_t *bitmap)
+void LiquidCrystal::createChar_P (uint8_t addr, const char *bitmap, uint8_t charCode)
+{
+	createChar_P (addr, (const uint8_t *)(bitmap), charCode);
+}
+
+// custom bitmaps in PROGMEM
+void LiquidCrystal::createChar_P (uint8_t addr, const uint8_t *bitmap, uint8_t charCode)
 {
 	uint8_t n;
-	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (SETCGRAMADDR | (addr * 8));
+	_send_cmd (SETCGRAMADDR | ((addr % 8) * 8));
 
 	for (n = 0; n < 8; n++) {
-		_send_data (_PGM_READ (bitmap + n));
+		_send_data (pgm_read_byte (bitmap + n));
+	}
+
+	if (charCode != 255) {
+		translateChar (addr, charCode);
 	}
 
 	home (); // make sure cursor isn't fubar
 }
 
 // custom bitmaps in EEPROM
-void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap)
+void LiquidCrystal::createChar_E (uint8_t addr, const char *bitmap, uint8_t charCode)
+{
+	createChar_E (addr, (const uint8_t *)(bitmap), charCode);
+}
+
+// custom bitmaps in EEPROM
+void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap, uint8_t charCode)
 {
 	uint8_t n;
-	addr %= 0x08; // we only have 8 addrs 0-7
 
-	_send_cmd (SETCGRAMADDR | (addr * 8));
+	_send_cmd (SETCGRAMADDR | ((addr % 8) * 8));
 
 	for (n = 0; n < 8; n++) {
 		_send_data (eeprom_read_byte ((const uint8_t *) (bitmap + n)));
 	}
 
+	if (charCode != 255) {
+		translateChar (addr, charCode);
+	}
+
 	home (); // make sure cursor isn't fubar
-}
-
-// private functions
-// dummies for stream compatability
-int LiquidCrystal::available (void)
-{
-	return 0;
-}
-
-int LiquidCrystal::peek (void)
-{
-	return 0;
-}
-
-int LiquidCrystal::read (void)
-{
-	return 0;
-}
-
-void LiquidCrystal::flush (void)
-{
-	// void so return nothing
-}
-
-LiquidCrystal::operator bool ()
-{
-	return true;
 }
 
 ///////////////////////////////////////////////
@@ -563,6 +575,17 @@ LiquidCrystal::operator bool ()
 ///////////////////////////////////////////////
 size_t LiquidCrystal::write (uint8_t data)
 {
+	size_t n;
+
+	n = 8;
+
+	while (n--) {
+		if (data == _translateTable[n]) {
+			data = n;
+			break;
+		}
+	}
+
 	switch (data) {
 
 		case 0x08: {
@@ -593,16 +616,16 @@ size_t LiquidCrystal::write (uint8_t data)
 	}
 
 	_send_data (data);
-	_cur_x++;
 
-	if (_cur_x < _numcols) { // if next col pos isn't at end
-		// nothing
+	if (_cur_x < (_numcols - 1)) { // if next col pos isn't at end
+		_cur_x++;
+
 	} else {
 		_cur_x = 0;
-		_cur_y++;
 
-		if (_cur_y < _numrows) { // need new row
-			// nothing
+		if (_cur_y < (_numrows - 1)) { // need new row
+			_cur_y++;
+
 		} else {
 			_cur_x = 0;
 			_cur_y = 0;
@@ -611,7 +634,9 @@ size_t LiquidCrystal::write (uint8_t data)
 
 	setCursor (_cur_x, _cur_y);
 
-	return 1;
+	n = 1;
+
+	return n;
 }
 
 size_t LiquidCrystal::_backSpace (void)
@@ -636,7 +661,7 @@ size_t LiquidCrystal::_backSpace (void)
 	}
 
 	setCursor (_tmp_x, _tmp_y);
-	write (0x20);
+	write ((uint8_t)(' '));
 	setCursor (_tmp_x, _tmp_y);
 
 	return 0;
@@ -644,9 +669,10 @@ size_t LiquidCrystal::_backSpace (void)
 
 size_t LiquidCrystal::_lineFeed (void)
 {
-	_cur_y++;
+	if (_cur_y < (_numrows - 1)) {
+		_cur_y++;
 
-	if (_cur_y > _numrows) {
+	} else {
 		_cur_y = 0;
 	}
 
@@ -667,11 +693,11 @@ size_t LiquidCrystal::_doTabs (uint8_t _tab_size)
 	size_t n = 0;
 
 	if (! (_cur_x % _tab_size)) {
-		n += write (0x20);
+		n += write ((uint8_t)(' '));
 	}
 
 	while (_cur_x % _tab_size) {
-		n += write (0x20);
+		n += write ((uint8_t)(' '));
 	}
 
 	return n;
@@ -746,11 +772,11 @@ void LiquidCrystal::_send8bits (uint8_t data)
 // pulse the "enable" pin to clock in data
 void LiquidCrystal::_pulseEnable (void)
 {
-	__builtin_avr_delay_cycles ((F_CPU / 1e6) * 1);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*1);
 	*_EN_PORT |= _EN_BIT; // assert "enable" (strobe in the data byte)
-	__builtin_avr_delay_cycles ((F_CPU / 1e6) * 1);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*1);
 	*_EN_PORT &= ~_EN_BIT; // de-assert "enable"
-	__builtin_avr_delay_cycles ((F_CPU / 1e6) * 100);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*100);
 }
 
 uint8_t LiquidCrystal::_serialXfer (uint8_t data)

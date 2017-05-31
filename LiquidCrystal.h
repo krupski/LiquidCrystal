@@ -30,7 +30,7 @@
 #include <Arduino.h>
 #endif
 
-class LiquidCrystal : public Stream
+class LiquidCrystal : public Print
 {
 	public:
 		// serial, no reset
@@ -51,7 +51,7 @@ class LiquidCrystal : public Stream
 		LiquidCrystal (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 		// initialization
 		void init (uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
-		void begin (int8_t, int8_t, int8_t = 0);
+		void begin (int8_t, int8_t, int8_t=0);
 		// user commands
 		void setBrightness (uint8_t);
 		void home (void);
@@ -81,18 +81,16 @@ class LiquidCrystal : public Stream
 		void scrollDisplayRight (void);
 		void leftToRight (void);
 		void rightToLeft (void);
-		void createChar (uint8_t, const uint8_t *);
-		void createChar_P (uint8_t, const uint8_t *);
-		void createChar_E (uint8_t, const uint8_t *);
-		// dummies for stream compatibility
-		virtual int available (void);
-		virtual int peek (void);
-		virtual int read (void);
-		virtual void flush (void);
-		operator bool (void);
-		// universal write used by Print
+		void translateChar (uint8_t, uint8_t);
+		void createChar (uint8_t, const char *, uint8_t=255);
+		void createChar (uint8_t, const uint8_t *, uint8_t=255);
+		void createChar_P (uint8_t, const char *, uint8_t=255);
+		void createChar_P (uint8_t, const uint8_t *, uint8_t=255);
+		void createChar_E (uint8_t, const char *, uint8_t=255);
+		void createChar_E (uint8_t, const uint8_t *, uint8_t=255);
 		virtual size_t write (uint8_t);
 		using Print::write;
+
 	private:
 		// private code begins here
 		// hd44780 commands
@@ -132,14 +130,6 @@ class LiquidCrystal : public Stream
 		#define BUSYFLAG       _BV(7) // 1=busy, 0=ready (must READ status to get this [which we don't do yet])
 		#define RSBIT          _BV(1) // register select bit
 		#define RWBIT          _BV(2) // read/write bit (1=read, 0=write)
-		// for reading flash
-		#ifndef _PGM_READ
-		#ifdef pgm_read_byte_far
-		#define _PGM_READ pgm_read_byte_far
-		#else
-		#define _PGM_READ pgm_read_byte_near
-		#endif
-		#endif
 		// prototypes
 		size_t _backSpace (void);
 		size_t _lineFeed (void);
@@ -169,6 +159,7 @@ class LiquidCrystal : public Stream
 		uint8_t _displayControl;
 		uint8_t _displayCursor;
 		uint8_t _displayFunction;
+		uint8_t _translateTable[8];
 		// pin bitmasks
 		uint8_t _BIT_MASK[8];
 		uint8_t _RS_BIT;
