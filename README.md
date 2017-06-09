@@ -14,7 +14,7 @@ Most importantly, this library supports streams which means, when used along wit
 ___
 <sub><b>(Typical LCD Display)</b></sub>
 
-<a href="#"><img width="414" height="190" src="http://ecx.images-amazon.com/images/I/41WzWE5uF5L.jpg" /></a>
+<a href="#"><img width="414" height="190" src="https://camo.githubusercontent.com/4a66dabd383acaf6b2af3c5f4b910933d0171726/687474703a2f2f6563782e696d616765732d616d617a6f6e2e636f6d2f696d616765732f492f3431577a5745357546354c2e6a7067" /></a>
 
 <p>&nbsp;</p>
 
