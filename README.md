@@ -6,8 +6,6 @@ Changes include direct port access instead of "digitalWrite" and "pinMode" and t
 
 Also several new functions have been added such as character code support (for example, a carriage return character homes the cursor, a linefeed drops down to the next line, etc...). It is also possible to read, from the driver, the current cursor position as row and column, making it easier to locate the cursor and update individual areas of the display.
 
-Most importantly, this library supports streams which means, when used along with my Stdinout library, it is possible to set an LCD device to standard output and/or standard error and then simply use "printf" to write to the LCD.
-
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 
