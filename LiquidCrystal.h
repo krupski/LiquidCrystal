@@ -81,6 +81,7 @@ class LiquidCrystal : public Print
 		void scrollDisplayRight (void);
 		void leftToRight (void);
 		void rightToLeft (void);
+		void clearChar (uint8_t);
 		void translateChar (uint8_t, uint8_t);
 		void createChar (uint8_t, const char *, uint8_t=255);
 		void createChar (uint8_t, const uint8_t *, uint8_t=255);

@@ -260,10 +260,10 @@ void LiquidCrystal::begin (int8_t cols, int8_t rows, int8_t dotsize)
 	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*50);
 
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*200);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*20);
 
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*200);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*20);
 
 	if (x == MODE_4) { // if actual bitmode is 4 then clear the 8 bit flag
 		_displayFunction &= ~BITMODE8;
@@ -279,7 +279,7 @@ void LiquidCrystal::begin (int8_t cols, int8_t rows, int8_t dotsize)
 
 	// finish display reset
 	_send_cmd (_displayFunction); // set the interface bit mode
-	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e6))*200);
+	__builtin_avr_delay_cycles (((double)(F_CPU)/(double)(1e3))*20);
 
 	_bit_mode = x; // now driver uses 4 or 8 bits
 
@@ -288,8 +288,9 @@ void LiquidCrystal::begin (int8_t cols, int8_t rows, int8_t dotsize)
 	x = 8;
 
 	while (x--) {
-		translateChar (x, 0); // initialize / clear character translate table
+		clearChar (x); // clear CGRAM and init translation table
 	}
+
 
 	setDisplay (1); // turn display on
 	clearScreen (); // clear display
@@ -493,6 +494,22 @@ void LiquidCrystal::rightToLeft (void)
 	_send_cmd (_displayMode);
 }
 
+void LiquidCrystal::clearChar (uint8_t addr)
+{
+	uint8_t n;
+
+	addr %= 8; // constrain address to 0...7
+
+	_send_cmd (SETCGRAMADDR | (addr * 8)); // select CG ram slot
+
+	for (n = 0; n < 8; n++) {
+		_send_data (0); // write a zero to CG ram
+	}
+
+	translateChar (addr, addr); // remove char from translation table
+	home (); // make sure cursor isn't fubar
+}
+
 void LiquidCrystal::translateChar (uint8_t addr, uint8_t charCode)
 {
 	_translateTable[(addr % 8)] = charCode;
@@ -580,8 +597,8 @@ size_t LiquidCrystal::write (uint8_t data)
 	n = 8;
 
 	while (n--) {
-		if (data == _translateTable[n]) {
-			data = n;
+		if (data == _translateTable[n]) { // if character matches a table entry...
+			data = n; // get the address of the new character
 			break;
 		}
 	}
@@ -703,9 +720,9 @@ size_t LiquidCrystal::_doTabs (uint8_t _tab_size)
 	return n;
 }
 
-void LiquidCrystal::_send_cmd (uint8_t data)
+void LiquidCrystal::_send_cmd (uint8_t cmd)
 {
-	_send (data, _CMD); // rs = low
+	_send (cmd, _CMD); // rs = low
 }
 
 void LiquidCrystal::_send_data (uint8_t data)
