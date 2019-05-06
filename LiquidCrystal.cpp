@@ -600,7 +600,7 @@ size_t LiquidCrystal::vt_exec (void)
 			while (n--) {
 				// col += 1.0 is "cursor foward (next column)"
 				// col -= 1.0 is "cursor backward (previous column)"
-				(vt_cmd == 'A') ? col += 1.0 : col -= 1.0;
+				(vt_cmd == 'C') ? col += 1.0 : col -= 1.0;
 			}
 			setLine (col, row); // set new cursor row & column
 			break;
