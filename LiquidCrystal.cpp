@@ -1,10 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Arduino Liquid Crystal (LCD) driver library
+//  Arduino Liquid Crystal (LCD/VFD) driver library
 //  Copyright (c) 2012 David A. Mellis <dam@mellis.org>
-//  Copyright (c) 2018 Roger A. Krupski <rakrupski@verizon.net>
+//  Copyright (c) 2019 Roger A. Krupski <rakrupski@verizon.net>
 //
-//  Last update: 10 March 2018
+//  Last update: 6 May 2019
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -23,59 +23,34 @@
 
 #include "LiquidCrystal.h"
 
-// Noritake CU-UW mode serial interface, hardware reset not available
+// serial interface, hardware reset not available
 LiquidCrystal::LiquidCrystal (
 	uint8_t siso, uint8_t stb, uint8_t sck
-) {
-	init (
-		MODE_S,
-		siso, stb, sck,
-		NO_RST, 0, 0, 0,
-		0, 0, 0, 0,
-		NO_RST
-	);
+) { // 3
+	init (MODE_S, siso, stb, sck, NO_RST, 0, 0, 0, 0, 0, 0, 0, NO_RST);
 }
 
-// Noritake CU-UW mode serial interface, hardware reset is enabled
-// and available (___D0 pin is used for reset___)
+// serial interface, hardware reset is available (D0 pin is used for reset)
 LiquidCrystal::LiquidCrystal (
 	uint8_t siso, uint8_t stb, uint8_t sck, uint8_t reset
-) {
-	init (
-		MODE_S,
-		siso, stb, sck,
-		reset, 0, 0, 0,
-		0, 0, 0, 0,
-		NO_RST
-	);
+) { // 4
+	init (MODE_S, siso, stb, sck, reset, 0, 0, 0, 0, 0, 0, 0, NO_RST);
 }
 
 // parallel interface 4 bits without active r/w (must tie r/w low manually)
 LiquidCrystal::LiquidCrystal (
 	uint8_t rs, /* no rw */ uint8_t en,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
-) {
-	init (
-		MODE_4,
-		rs, NO_RW, en,
-		0, 0, 0, 0,
-		d4, d5, d6, d7,
-		NO_RST
-	);
+) { // 6
+	init (MODE_4, rs, NO_RW, en, 0, 0, 0, 0, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 4 bits with active r/w
 LiquidCrystal::LiquidCrystal (
 	uint8_t rs, uint8_t rw, uint8_t en,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
-) {
-	init (
-		MODE_4,
-		rs, rw, en,
-		0, 0, 0, 0,
-		d4, d5, d6, d7,
-		NO_RST
-	);
+) { // 7
+	init (MODE_4, rs, rw, en, 0, 0, 0, 0, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 4 bits with active r/w and active reset
@@ -83,14 +58,8 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t rs, uint8_t rw, uint8_t en,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7,
 	uint8_t v0
-) {
-	init (
-		MODE_4,
-		rs, rw, en,
-		0, 0, 0, 0,
-		d4, d5, d6, d7,
-		v0
-	);
+) { // 8
+	init (MODE_4, rs, rw, en, 0, 0, 0, 0, d4, d5, d6, d7, v0);
 }
 
 // parallel interface 8 bits without active r/w
@@ -98,14 +67,8 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t rs, /* no rw */ uint8_t en,
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
-) {
-	init (
-		MODE_8,
-		rs, NO_RW, en,
-		d0, d1, d2, d3,
-		d4, d5, d6, d7,
-		NO_RST
-	);
+) { // 10
+	init (MODE_8, rs, NO_RW, en, d0, d1, d2, d3, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 8 bits with active r/w
@@ -113,14 +76,8 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t rs, uint8_t rw, uint8_t en,
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7
-) {
-	init (
-		MODE_8,
-		rs, rw, en,
-		d0, d1, d2, d3,
-		d4, d5, d6, d7,
-		NO_RST
-	);
+) { // 11
+	init (MODE_8, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7, NO_RST);
 }
 
 // parallel interface 8 bits with active r/w and active reset
@@ -129,19 +86,12 @@ LiquidCrystal::LiquidCrystal (
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7,
 	uint8_t v0
-) {
-	init (
-		MODE_8,
-		rs, rw, en,
-		d0, d1, d2, d3,
-		d4, d5, d6, d7,
-		v0
-	);
+) { // 12
+	init (MODE_8, rs, rw, en, d0, d1, d2, d3, d4, d5, d6, d7, v0);
 }
 
 void LiquidCrystal::init (
-	uint8_t bitmode,
-	uint8_t rs, uint8_t rw, uint8_t en,
+	uint8_t bitmode, uint8_t rs, uint8_t rw, uint8_t en,
 	uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7,
 	uint8_t v0
@@ -162,40 +112,39 @@ void LiquidCrystal::init (
 		// bit [2] = read/write (1=read,0=write)
 		// bit [1] = register select (1=data,0=command)
 		// bit [0] = 0
-		_serial_cmd = 0b11111000;
+		_serial_cmd = ((_RSBIT|_RWBIT|_SYNC));
 
 		n = digitalPinToPort (rs); // SISO pin is on RS
 		_SIO_BIT = digitalPinToBitMask (rs);
 		_SIO_PIN = portInputRegister (n);
-		_SIO_OUT = portOutputRegister (n);
+		_SIO_PORT = portOutputRegister (n);
 		_SIO_DDR = portModeRegister (n);
-		*_SIO_DDR &= ~_SIO_BIT; // SISO pin is in "input_pullup" mode
-		*_SIO_OUT |= _SIO_BIT; // set SISO pin high
+		*_SIO_DDR |= _SIO_BIT;
+		*_SIO_PORT |= _SIO_BIT;
 
 		n = digitalPinToPort (rw); // STROBE pin is on RW
 		_STB_BIT = digitalPinToBitMask (rw);
-		_STB_OUT = portOutputRegister (n);
+		_STB_PORT = portOutputRegister (n);
 		_STB_DDR = portModeRegister (n);
 		*_STB_DDR |= _STB_BIT;
-		*_STB_OUT |= _STB_BIT;
+		*_STB_PORT |= _STB_BIT;
 
 		n = digitalPinToPort (en); // SCLOCK pin is on EN
 		_SCK_BIT = digitalPinToBitMask (en);
-		_SCK_OUT = portOutputRegister (n);
+		_SCK_PORT = portOutputRegister (n);
 		_SCK_DDR = portModeRegister (n);
 		*_SCK_DDR |= _SCK_BIT;
-		*_SCK_OUT |= _SCK_BIT;
+		*_SCK_PORT |= _SCK_BIT;
 
 		if (_reset_pin != NO_RST) { // if we are using reset...
 			n = digitalPinToPort (d0); // RESET pin is on D0
 			_RST_BIT = digitalPinToBitMask (d0);
-			_RST_OUT = portOutputRegister (n);
+			_RST_PORT = portOutputRegister (n);
 			_RST_DDR = portModeRegister (n);
-			*_RST_DDR |= _RST_BIT; // set it as output (assert reset)
-			*_RST_OUT &= ~_RST_BIT; // lower reset pin
-			__builtin_avr_delay_cycles ((F_CPU / (1e3 / 1)) + 0.5); // delay 1 msec
-			*_RST_OUT |= _RST_BIT; // raise reset pin
-			*_RST_DDR &= ~_RST_BIT; // set it as input_pullup (de-assert reset)
+			*_RST_DDR |= _RST_BIT; // set it as output
+			*_RST_PORT &= ~_RST_BIT; // lower reset pin
+			__builtin_avr_delay_cycles (F_CPU / (_MSEC / 10.0)); // delay 10 msec
+			*_RST_PORT |= _RST_BIT; // raise reset pin
 		}
 
 	} else { // parallel mode
@@ -206,41 +155,40 @@ void LiquidCrystal::init (
 
 		_serial_mode = 0; // flag "not serial mode"
 		_rw_pin = rw; // global copy of r/w
-		_reset_pin = v0; // alternate use of pin
 
-		n = digitalPinToPort (rs);
+		n = digitalPinToPort (rs); // register select
 		_RS_BIT = digitalPinToBitMask (rs); // get bitmasks for parallel I/O
-		_RS_OUT = portOutputRegister (n); // get output ports
+		_RS_PORT = portOutputRegister (n); // get output ports
 		_RS_DDR = portModeRegister (n); // get DDR registers
 		*_RS_DDR |= _RS_BIT; // ddr = output
-		*_RS_OUT &= ~_RS_BIT; // initial setting RS = LOW = command
+		*_RS_PORT |= _RS_BIT; // initial setting RS = HIGH = data
 
-		n = digitalPinToPort (en);
+		n = digitalPinToPort (en); // enable
 		_EN_BIT = digitalPinToBitMask (en);
-		_EN_OUT = portOutputRegister (n);
+		_EN_PORT = portOutputRegister (n);
 		_EN_DDR = portModeRegister (n);
 		*_EN_DDR |= _EN_BIT; // ddr = output
-		*_EN_OUT &= ~_EN_BIT; // initial = low
+		*_EN_PORT &= ~_EN_BIT; // initial = low
 
-		if (_rw_pin != NO_RW) {
+		if (_rw_pin != NO_RW) { // read/write
 			n = digitalPinToPort (rw);
 			_RW_BIT = digitalPinToBitMask (rw);
-			_RW_OUT = portOutputRegister (n);
+			_RW_PORT = portOutputRegister (n);
 			_RW_DDR = portModeRegister (n);
 			*_RW_DDR |= _RW_BIT; // ddr = output
-			*_RW_OUT &= ~_RW_BIT; // initial setting RW = LOW = write
+			*_RW_PORT &= ~_RW_BIT; // initial setting RW = LOW = write
 		}
 
-		if (_reset_pin != NO_RST) { // if we are using reset...
-			n = digitalPinToPort (v0); // RESET pin is on V0
-			_RST_BIT = digitalPinToBitMask (v0);
-			_RST_OUT = portOutputRegister (n);
+		if (v0 != NO_RST) {
+			_reset_pin = v0; // alternate use of pin
+			n = digitalPinToPort (_reset_pin); // RESET pin is on V0
+			_RST_BIT = digitalPinToBitMask (_reset_pin);
+			_RST_PORT = portOutputRegister (n);
 			_RST_DDR = portModeRegister (n);
-			*_RST_DDR |= _RST_BIT; // set it as output (assert reset)
-			*_RST_OUT &= ~_RST_BIT; // lower reset pin
-			__builtin_avr_delay_cycles ((F_CPU / (1e3 / 1)) + 0.5); // delay 1 msec
-			*_RST_OUT |= _RST_BIT; // raise reset pin
-			*_RST_DDR &= ~_RST_BIT; // set it as input_pullup (de-assert reset)
+			*_RST_DDR |= _RST_BIT; // set it as output
+			*_RST_PORT &= ~_RST_BIT; // lower reset pin
+			__builtin_avr_delay_cycles (F_CPU / (_MSEC / 10));
+			*_RST_PORT |= _RST_BIT; // raise reset pin
 		}
 
 		x = 8;
@@ -249,19 +197,13 @@ void LiquidCrystal::init (
 			n = digitalPinToPort (data_pin[x]);
 			_BIT_MASK[x] = digitalPinToBitMask (data_pin[x]); // get bitmask
 			_DATA_DDR[x] = portModeRegister (n); // get DDR register
-			_DATA_OUT[x] = portOutputRegister (n); // get output port register
+			_DATA_PORT[x] = portOutputRegister (n); // get output port register
 			_DATA_PIN[x] = portInputRegister (n); // get input port register
 			// if we are in 4 bit mode then only set d7...d4
 			if (x == _bit_mode) {
 				break;
 			}
 		}
-	}
-
-	x = 8;
-
-	while (x--) {
-		_clearChar (x); // erase junk in CGRAM
 	}
 
 	begin (16, 1);
@@ -276,12 +218,12 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 
 	// setup default DDRAM offsets
 	setRowOffsets (0x00, 0x40, 0x14, 0x54);
-
-//  use this one if LCD lines 2 and 3 don't line up properly
+//  use this one if LCD/VFD lines 2 and 3 don't line up properly
 //	setRowOffsets (0x00, 0x40, 0x10, 0x50);
 
+
 	// we need at least 40ms after power rises above 2.7V before sending commands.
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 50)) + 0.5); // delay 50 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 100.0));
 
 	x = _bit_mode; // save actual bitmode
 	_bit_mode = MODE_8; // force reset to be 8 bit
@@ -304,13 +246,13 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 
 	// send reset sequence
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 50)) + 0.5); // delay 50 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 100.0));
 
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 20)) + 0.5); // delay 20 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 50.0));
 
 	_send_cmd (_displayFunction);
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 20)) + 0.5); // delay 20 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 50.0));
 
 	if (x == MODE_4) { // if actual bitmode is 4 then clear the 8 bit flag
 		_displayFunction &= ~BITMODE8;
@@ -326,14 +268,16 @@ void LiquidCrystal::begin (uint8_t cols, uint8_t rows, uint8_t dotsize)
 
 	// finish display reset
 	_send_cmd (_displayFunction); // set the interface bit mode
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 20)) + 0.5); // delay 20 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 50.0));
 
 	_bit_mode = x; // now driver uses 4 or 8 bits
 
 	_send_cmd (_displayMode); // entry mode set
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 50.0));
 
 	setDisplay (1); // turn display on
 	clearScreen();  // clear display
+	vt_reset(); // initialize vt parser
 }
 
 void LiquidCrystal::setBrightness (uint8_t pct)
@@ -349,6 +293,9 @@ void LiquidCrystal::setBrightness (uint8_t pct)
 	if (!pct) {
 		setDisplay (0);
 		return;
+
+	} else {
+		setDisplay (1);
 	}
 
 	// multiply everything by 10 so fractional
@@ -370,7 +317,7 @@ void LiquidCrystal::setBrightness (uint8_t pct)
 void LiquidCrystal::home (void)
 {
 	_send_cmd (RETURNHOME);
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 20)) + 0.5); // delay 20 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 50.0));
 	setCursor (0, 0);
 }
 
@@ -382,11 +329,11 @@ void LiquidCrystal::clearScreen (void)
 void LiquidCrystal::clear (void)
 {
 	_send_cmd (CLEARDISPLAY);
-	__builtin_avr_delay_cycles ((F_CPU / (1e3 / 20)) + 0.5); // delay 20 msec
+	__builtin_avr_delay_cycles (F_CPU / (_MSEC / 50.0));
 	setCursor (0, 0);
 }
 
-// if using a 16x4 LCD and line 3 & 4 are not placed correctly try:
+// if using a 16x4 LCD/VFD and line 3 & 4 are not placed correctly try:
 //    this ---> setRowOffsets(0x00, 0x40, 0x14, 0x54);
 // or this ---> setRowOffsets(0x00, 0x40, 0x10, 0x50);
 void LiquidCrystal::setRowOffsets (uint8_t row0, uint8_t row1, uint8_t row2, uint8_t row3)
@@ -397,9 +344,15 @@ void LiquidCrystal::setRowOffsets (uint8_t row0, uint8_t row1, uint8_t row2, uin
 	_row_offsets[3] = row3;
 }
 
-void LiquidCrystal::setLine (uint8_t x, uint8_t y)
+void LiquidCrystal::setLine (double x, double y)
 {
 	setCursor (x, y);
+}
+
+void LiquidCrystal::getLine (double &x, double &y)
+{
+	x = (double)(_cur_x);
+	y = (double)(_cur_y);
 }
 
 void LiquidCrystal::setCursor (uint8_t x, uint8_t y)
@@ -415,13 +368,11 @@ void LiquidCrystal::getCursor (uint8_t &x, uint8_t &y)
 	y = _cur_y;
 }
 
-// thie is for external use only
 void LiquidCrystal::pushCursor (void)
 {
 	getCursor (_save_x, _save_y);
 }
 
-// thie is for external use only
 void LiquidCrystal::popCursor (void)
 {
 	setCursor (_save_x, _save_y);
@@ -547,12 +498,12 @@ void LiquidCrystal::createChar (uint8_t addr, const uint8_t *bitmap)
 {
 	uint8_t n;
 
-	_clearChar (addr); // erase old LCD data
+	_clearChar (addr); // erase old LCD/VFD data
 
 	_send_cmd (SETCGRAMADDR | ((addr % 8) * 8));
 
 	for (n = 0; n < 8; n++) {
-		_send_data (bitmap[n]); // 8 bytes to a char (but only 5 bits used)
+		_send_data (bitmap[n]); // 8 bytes to a char (but only 5 bits)
 	}
 
 	home();  // make sure cursor isn't fubar
@@ -568,7 +519,7 @@ void LiquidCrystal::createChar_P (uint8_t addr, const uint8_t *bitmap)
 {
 	uint8_t n;
 
-	_clearChar (addr); // erase old LCD data
+	_clearChar (addr); // erase old LCD/VFD data
 
 	_send_cmd (SETCGRAMADDR | ((addr % 8) * 8));
 
@@ -590,7 +541,7 @@ void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap)
 {
 	uint8_t n;
 
-	_clearChar (addr); // erase old LCD data
+	_clearChar (addr); // erase old LCD/VFD data
 
 	_send_cmd (SETCGRAMADDR | ((addr % 8) * 8));
 
@@ -601,58 +552,267 @@ void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap)
 	home();  // make sure cursor isn't fubar
 }
 
-///////////////////////////////////////////////
-//     note 0x00...0x07 are custom chars     //
-///////////////////////////////////////////////
+// reset VT parser to starting defaults (ground state)
+void LiquidCrystal::vt_reset (void)
+{
+	vt_state = 0;
+	vt_cmd = 0;
+	vt_args = 8;
+	while (vt_args--) {
+		vt_arg[vt_args] = 0;
+	}
+	vt_args = 0;
+}
+
+// execute a VT command
+size_t LiquidCrystal::vt_exec (void)
+{
+	uint8_t n;
+	double col, row;
+
+	switch (vt_cmd) {
+
+		// CSI[n]A (cursor up) or CSI[n]B (cursor down)
+		// NOTE: [n] is options and defaults to 1 if not given
+		case 'A'...'B': {
+			n = 1; // default
+			getLine (col, row); // get current cursor row & column
+			if (vt_arg[0] > 0) {
+				n = vt_arg[0];
+			}
+			while (n--) {
+				// row -= 1.0 is "cursor up (previous row)"
+				// row += 1.0 is "cursor down (next row)"
+				(vt_cmd == 'A') ? row -= 1.0 : row += 1.0;
+			}
+			setLine (col, row); // set new cursor row & column
+			break;
+		}
+
+		// CSI[n]C (cursor forward) or CSI[n]D (cursor backward)
+		// NOTE: [n] is options and defaults to 1 if not given
+		case 'C'...'D': {
+			n = 1; // default
+			getLine (col, row); // get current cursor row & column
+			if (vt_arg[0] > 0) {
+				n = vt_arg[0];
+			}
+			while (n--) {
+				// col += 1.0 is "cursor foward (next column)"
+				// col -= 1.0 is "cursor backward (previous column)"
+				(vt_cmd == 'A') ? col += 1.0 : col -= 1.0;
+			}
+			setLine (col, row); // set new cursor row & column
+			break;
+		}
+
+		// CSI[row];[column]f (line position X,Y)
+		// NOTE: non-standard, ANSI uses 1;1 as the home position while
+		//       we use 0;0 to conform with the Arduino numbering.
+		// NOTE: On a character LCD/VFD, cursor and line are the same
+		//       thing, but we support "f" for line and "H" for cursor
+		//       to conform to the VFD driver syntax. Not ANSI standard.
+		case 'f': {
+			if (vt_args == 2) {
+				setLine (vt_arg[0], vt_arg[1]);
+			}
+			break;
+		}
+
+		// CSI[x];[y]H (cursor position X,Y)
+		// NOTE: non-standard, ANSI uses 1;1 as the home position while
+		//       we use 0;0 to conform with the Arduino numbering.
+		// NOTE: On a character LCD/VFD, cursor and line are the same
+		//       thing, but we support "f" for line and "H" for cursor
+		//       to conform to the VFD driver syntax. Not ANSI standard.
+		case 'H': {
+			if (vt_args == 2) {
+				setCursor (vt_arg[0], vt_arg[1]);
+			}
+			break;
+		}
+
+		// CSI[n]J (erase in display `clear screen')
+		// NOTE: if [n] is not specified, it defaults to 0.
+		// NOTE: we support [n] 0...3, but in all cases the entire screen
+		//       is cleared and the cursor set to 0,0 (home). Not ANSI standard.
+		case 'J': {
+			if ((vt_arg[0] == 2) && !(vt_args < 0) && !(vt_args > 3)) {
+				clearScreen();
+			}
+			break;
+		}
+
+		// CSIm (select graphic rendition)
+		// we sort of support this as follows:
+		// CSI0m: reset: set brightness to  50%
+		// CSI1m: bold:  set brightness to 100%
+		// CSI2m: faint: set brightness to  30%
+		// CSI30m...37m: foreground "colors" 30...37 are 8 steps of brightness
+		// CSI40m...47m: background "colors" 40...47 are 8 steps of brightness (same as above)
+		case 'm': {
+			if (vt_args > 0) {
+				switch (vt_arg[0]) {
+					case 0: {
+						setBrightness (50);
+						break;
+					}
+					case 1: {
+						setBrightness (100);
+						break;
+					}
+					case 2: {
+						setBrightness (30);
+						break;
+					}
+					// ansi colors used as brightness control
+					case 30 ... 49: {
+						// 30|40==0, 39|49==99
+						setBrightness ((vt_arg[0] % 10) * 11);
+						break;
+					}
+					default: {
+						break;
+					}
+				}
+			}
+		}
+
+		// CSIs (save cursor position)
+		case 's': {
+			if (vt_args == 1) {
+				pushCursor();
+			}
+			break;
+		}
+
+		// CSIu (restore cursor position)
+		case 'u': {
+			if (vt_args == 1) {
+				popCursor();
+			}
+			break;
+		}
+
+		default: {
+			break;
+		}
+	}
+
+	vt_reset(); // cmd done, reset parser
+
+	return 0;
+}
+
+size_t LiquidCrystal::write (int c)
+{
+	// support non-uint8_t writes
+	write ((uint8_t)(c));
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////
+//  note 0x00...0x07 are custom chars, so we parse VT first  //
+///////////////////////////////////////////////////////////////
 size_t LiquidCrystal::write (uint8_t c)
 {
+	switch (vt_state) {
+
+		// state 0 is "ordinary character" or "ground state"
+		case 0: {
+			if (c == 0x1B) { // VT code starts with ESC
+				vt_state++; // flag "got ESC, look for more VT
+				return 0; // got part of a vt sequence, don't print it
+
+			} else {
+				vt_reset(); // reset parser
+				break; // fall through to main write
+			}
+		}
+
+		// state 1 is "got VT escape (0x1B) look for left bracket (0x5B)"
+		case 1: {
+			if (c == '[') { // VT esc code followed by "["
+				vt_state++; // flag "got a sequence, look for a param"
+				return 0; // got part of a vt sequence, don't print it
+
+			} else {
+				vt_reset(); // reset parser
+				break; // fall through to main write
+			}
+		}
+
+		// state 2...9 is "get parameter"
+		case 2 ... 9: {
+			if (isdigit (c)) { // if 0...9 then it's a parameter
+				vt_arg[vt_args] *= 10; // parse out...
+				vt_arg[vt_args] += (c - '0'); // ...first param
+				return 0; // got part of a vt sequence, don't print it
+
+			} else if (c == ';') { // semicolon flags a parameter delimiter
+				vt_args++; // count parsed arg
+				vt_state++; // flag "got param delimiter, look for next param"
+				return 0; // got part of a vt sequence, don't print it
+
+			} else if (! ((c < '@') || (c > '~'))) { // 0x40...0x7E marks end of VT command
+				vt_cmd = c; // copy VT command
+				vt_args++; // normalize count
+				return vt_exec(); // got a valid sequence, exec it
+			}
+		}
+
+		default: {
+			vt_reset(); // unknown piece of vt, reject it and print
+			break; // fall through to main write
+		}
+	}
+
 	switch (c) {
 
-		case 0x08: {
+		default: {
+			_send_data (c);
+
+			if (_cur_x < (_numcols - 1)) { // if next col pos isn't at end
+				_cur_x++;
+
+			} else {
+				_cur_x = 0;
+
+				if (_cur_y < (_numrows - 1)) { // need new row
+					_cur_y++;
+
+				} else {
+					_cur_x = 0;
+					_cur_y = 0;
+				}
+			}
+
+			setCursor (_cur_x, _cur_y);
+			break;
+		}
+
+		case '\b': {
 			return _backSpace();
 		}
 
-		case 0x09: {
+		case '\t': {
 			return _doTabs (4);
 			break;
 		}
 
-		case 0x0A: {
+		case '\n': {
 			return _lineFeed();
 		}
 
-		case 0x0C: {
+		case '\f': {
 			clearScreen();
 			return 0;
 		}
 
-		case 0x0D: {
+		case '\r': {
 			return _carriageReturn();
 		}
-
-		default: {
-			break; // must be printable - fall through and do it
-		}
 	}
-
-	_send_data (c);
-
-	if (_cur_x < (_numcols - 1)) { // if next col pos isn't at end
-		_cur_x++;
-
-	} else {
-		_cur_x = 0;
-
-		if (_cur_y < (_numrows - 1)) { // need new row
-			_cur_y++;
-
-		} else {
-			_cur_x = 0;
-			_cur_y = 0;
-		}
-	}
-
-	setCursor (_cur_x, _cur_y);
 
 	return (size_t)(1);
 }
@@ -752,41 +912,41 @@ void LiquidCrystal::_send_data (uint8_t dat)
 
 // read either status or data determined by rs (register select)
 // if rs = 1 then we are reading DD RAM or CG RAM
-// if rs = 0 then we are reading BF (Busy Flag) and LCD address
+// if rs = 0 then we are reading BF (Busy Flag) and LCD/VFD address
 // RW is set high (read) for SPI, it's set high (read) for
 // parallel ONLY IF the RW pin is selected, defined and used.
 uint8_t LiquidCrystal::_recv (uint8_t rs)
 {
-	uint8_t data;
+	uint8_t c;
 
 	if (_serial_mode) { // set or clear RS bit in serial command byte
-		rs ? _serial_cmd |= RSBIT : _serial_cmd &= ~RSBIT;
-		_serial_cmd |= RWBIT; // read mode
-		*_STB_OUT &= ~_STB_BIT; // assert strobe
-		_serialWrite (_serial_cmd);
-		data = _serialRead();
-		*_STB_OUT |= _STB_BIT; // de-assert strobe
+		rs ? _serial_cmd |= _RSBIT : _serial_cmd &= ~_RSBIT;
+		_serial_cmd |= _RWBIT; // read mode
+		*_STB_PORT &= ~_STB_BIT; // assert strobe
+		_serialSend (_serial_cmd); // send command via serial
+		__builtin_avr_delay_cycles (F_CPU / (_USEC / 1.0)); // pg. 13
+		c = _serialRecv (); // recv data via serial
+		*_STB_PORT |= _STB_BIT; // de-assert strobe
 
 	} else { // set or clear RS pin (parallel mode)
-		rs ? *_RS_OUT |= _RS_BIT : *_RS_OUT &= ~_RS_BIT;
+		rs ? *_RS_PORT |= _RS_BIT : *_RS_PORT &= ~_RS_BIT;
 
 		if (_rw_pin != NO_RW) {
-			*_RW_OUT |= _RW_BIT; // set r/w high = read
+			*_RW_PORT |= _RW_BIT; // set r/w high = read
 			_setDDR (_READ); // set port to read
 		} else {
 			return 0; // can't set r/w so just return
 		}
 
 		if (_bit_mode == MODE_4) {
-			data = (_recv4bits () << 4); // recv top half of byte
-			data |= _recv4bits (); // recv bottom half of byte
+			c = (_recv4bits () << 4); // recv top half of byte
+			c |= _recv4bits (); // recv bottom half of byte
 
 		} else {
-			data = _recv8bits (); // recv status or data via parallel
+			c = _recv8bits (); // recv status or data via parallel
 		}
 	}
-
-	return data;
+	return c;
 }
 
 // write either command or data determined by rs (register select)
@@ -794,60 +954,64 @@ uint8_t LiquidCrystal::_recv (uint8_t rs)
 // if rs = 0 then we are sending an HD44780 command
 // RW is set low (write) for SPI, it's set low (write) for parallel
 // ONLY IF the RW pin is selected, defined and used.
-void LiquidCrystal::_send (uint8_t data, uint8_t rs)
+void LiquidCrystal::_send (uint8_t c, uint8_t rs)
 {
 	if (_serial_mode) { // set or clear RS bit in serial command byte
-		rs ? _serial_cmd |= RSBIT : _serial_cmd &= ~RSBIT;
-		_serial_cmd &= ~RWBIT; // write mode
-		*_STB_OUT &= ~_STB_BIT; // assert strobe
-		_serialWrite (_serial_cmd);
-		_serialWrite (data);
-		*_STB_OUT |= _STB_BIT; // de-assert strobe
+		rs ? _serial_cmd |= _RSBIT : _serial_cmd &= ~_RSBIT;
+		_serial_cmd &= ~_RWBIT; // write mode
+		*_STB_PORT &= ~_STB_BIT; // assert strobe
+		_serialSend (_serial_cmd); // send command via serial
+		_serialSend (c); // send data via serial
+		*_STB_PORT |= _STB_BIT; // de-assert strobe
 
 	} else { // set or clear RS pin (parallel mode)
-		rs ? *_RS_OUT |= _RS_BIT : *_RS_OUT &= ~_RS_BIT;
+		rs ? *_RS_PORT |= _RS_BIT : *_RS_PORT &= ~_RS_BIT;
 
 		if (_rw_pin != NO_RW) {
-			*_RW_OUT &= ~_RW_BIT; // set r/w low = write
+			*_RW_PORT &= ~_RW_BIT; // set r/w low = write
 			_setDDR (_WRITE); // set port to write
 		}
 
 		if (_bit_mode == MODE_4) {
-			_send4bits (data >> 4); // send top half of byte
-			_send4bits (data & 0x0F); // send bottom half of byte
+			_send4bits (c >> 4); // send top half of byte
+			_send4bits (c & 0x0F); // send bottom half of byte
 
 		} else {
-			_send8bits (data); // send command or data via parallel
+			_send8bits (c); // send command or data via parallel
 		}
 	}
 }
 
-// parallel 4 bit read mode
+// parallel 4 bit mode (we receive top 4 bits, then bottom 4)
 uint8_t LiquidCrystal::_recv4bits (void)
 {
 	uint8_t c = 0;
-	uint8_t bits = 4;
+	uint8_t n = 4;
 
-	while (bits--) { // 4 bits parallel
-		*_EN_OUT |= _EN_BIT;
-		*_DATA_PIN[bits + 0x04] & _BIT_MASK[bits + 0x04] ? c |= (1 << bits) : c &= ~(1 << bits); // receive bit
-		*_EN_OUT &= ~_EN_BIT;
+	while (n--) { // 4 bits parallel
+		(*_DATA_PIN[n + 4] & _BIT_MASK[n + 4]) ? c |= (1 << n) : c &= ~(1 << n); // receive bit
 	}
+
+	*_EN_PORT |= _EN_BIT;
+	__builtin_avr_delay_cycles (F_CPU / (_USEC / 10.0));
+	*_EN_PORT &= ~_EN_BIT;
 
 	return c;
 }
 
-// parallel 8 bit read mode
+// parallel 8 bit mode (we receive all 8 bits at once)
 uint8_t LiquidCrystal::_recv8bits (void)
 {
 	uint8_t c = 0;
-	uint8_t bits = 8;
+	uint8_t n = 8;
 
-	while (bits--) { // 8 bits parallel
-		*_EN_OUT |= _EN_BIT;
-		*_DATA_PIN[bits] & _BIT_MASK[bits] ? c |= (1 << bits) : c &= ~(1 << bits); // receive bit
-		*_EN_OUT &= ~_EN_BIT;
+	while (n--) { // 8 bits parallel
+		(*_DATA_PIN[n] & _BIT_MASK[n]) ? c |= (1 << n) : c &= ~(1 << n); // receive bit
 	}
+
+	*_EN_PORT |= _EN_BIT;
+	__builtin_avr_delay_cycles (F_CPU / (_USEC / 10.0));
+	*_EN_PORT &= ~_EN_BIT;
 
 	return c;
 }
@@ -855,72 +1019,66 @@ uint8_t LiquidCrystal::_recv8bits (void)
 // parallel 4 bit mode (we send top 4 bits, then bottom 4)
 void LiquidCrystal::_send4bits (uint8_t c)
 {
-	uint8_t bits = 4; // bit count
+	uint8_t n = 4; // bit count
 
-	while (bits--) { // 4 bits parallel
-		(c & (1 << bits)) ? *_DATA_OUT[bits + 4] |= _BIT_MASK[bits + 4] : *_DATA_OUT[bits + 4] &= ~_BIT_MASK[bits + 4];
+	while (n--) { // 4 bits parallel
+		(c & (1 << n)) ? *_DATA_PORT[n + 4] |= _BIT_MASK[n + 4] : *_DATA_PORT[n + 4] &= ~_BIT_MASK[n + 4];
 	}
 
-	_pulseEnable(); // clock the data in
+	*_EN_PORT |= _EN_BIT;
+	__builtin_avr_delay_cycles (F_CPU / (_USEC / 10.0));
+	*_EN_PORT &= ~_EN_BIT; // latch data
 }
 
 // parallel 8 bit mode (we send all 8 bits at once)
 void LiquidCrystal::_send8bits (uint8_t c)
 {
-	uint8_t bits = 8; // bit count
+	uint8_t n = 8; // bit count
 
-	while (bits--) { // 8 bits parallel
-		(c & (1 << bits)) ? *_DATA_OUT[bits] |= _BIT_MASK[bits] : *_DATA_OUT[bits] &= ~_BIT_MASK[bits];
+	while (n--) { // 8 bits parallel
+		(c & (1 << n)) ? *_DATA_PORT[n] |= _BIT_MASK[n] : *_DATA_PORT[n] &= ~_BIT_MASK[n];
 	}
 
-	_pulseEnable(); // clock the data in
+	*_EN_PORT |= _EN_BIT;
+	__builtin_avr_delay_cycles (F_CPU / (_USEC / 10.0));
+	*_EN_PORT &= ~_EN_BIT; // latch data
 }
 
-uint8_t LiquidCrystal::_serialRead (void)
+void LiquidCrystal::_serialSend (uint8_t c)
 {
-	uint8_t bits = 8;
-	uint8_t data;
+	uint8_t n = 8;
 
-	*_SIO_DDR &= ~_SIO_BIT; // set sio DDR as input
+	*_SIO_DDR |= _SIO_BIT;
 
-	while (bits--) {
-		*_SCK_OUT &= ~_SCK_BIT; // read bit on falling edge
-		*_SIO_PIN &_SIO_BIT ? data |= (1 << bits) : data &= ~(1 << bits); // read bit
-		*_SCK_OUT |= _SCK_BIT; // set sck high
-	}
-
-	return data;
-}
-
-void LiquidCrystal::_serialWrite (uint8_t data)
-{
-	uint8_t bits = 8;
-
-	*_SIO_DDR |= _SIO_BIT; // set sio DDR as output
-
-	while (bits--) {
-		*_SCK_OUT &= ~_SCK_BIT; // set sck low
-		(data & (1 << bits)) ? *_SIO_OUT |= _SIO_BIT : *_SIO_OUT &= ~_SIO_BIT; // write bit
-		*_SCK_OUT |= _SCK_BIT; // write bit on rising edge
+	while (n--) {
+		__builtin_avr_delay_cycles (F_CPU / (_USEC / 5.0));
+		*_SCK_PORT &= ~_SCK_BIT; // set sck low
+		(c & (1 << n)) ? *_SIO_PORT |= _SIO_BIT : *_SIO_PORT &= ~_SIO_BIT; // write bit
+		*_SCK_PORT |= _SCK_BIT; // set sck high
 	}
 }
 
-void LiquidCrystal::_pulseEnable (void)
+uint8_t LiquidCrystal::_serialRecv (void)
 {
-	//          __
-	//  1us -->|  |<-- 50us -->|<-- return
-	// ________|  |____________|
-	//
-	*_EN_OUT |= _EN_BIT;
-	__builtin_avr_delay_cycles (F_CPU / (1e6 / 1));
-	*_EN_OUT &= ~_EN_BIT;
-	__builtin_avr_delay_cycles (F_CPU / (1e6 / 50)); // > 37us
+	uint8_t c = 0;
+	uint8_t n = 8;
+
+	*_SIO_DDR &= ~_SIO_BIT;
+
+	while (n--) {
+		*_SCK_PORT &= ~_SCK_BIT; // set sck low
+		__builtin_avr_delay_cycles (F_CPU / (_USEC / 5.0));
+		*_SCK_PORT |= _SCK_BIT; // set sck high
+		(*_SIO_PIN & _SIO_BIT) ? c |= (1 << n) : c &= ~(1 << n); // read bit
+	}
+
+	return c;
 }
 
 void LiquidCrystal::_setDDR (uint8_t dir)
 {
 	uint8_t x = 8;
-	// dir high == read, low == write
+
 	while (x--) {
 		dir ? *_DATA_DDR[x] &= ~_BIT_MASK[x] : *_DATA_DDR[x] |= _BIT_MASK[x];
 		// if we are in 4 bit mode then only set d7...d4
@@ -929,5 +1087,4 @@ void LiquidCrystal::_setDDR (uint8_t dir)
 		}
 	}
 }
-
 // end of LiquidCrystal.cpp
