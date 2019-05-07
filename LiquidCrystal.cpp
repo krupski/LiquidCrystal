@@ -552,92 +552,65 @@ void LiquidCrystal::createChar_E (uint8_t addr, const uint8_t *bitmap)
 	home();  // make sure cursor isn't fubar
 }
 
-// reset VT parser to starting defaults (ground state)
+// reset VT parser to starting defaults
 void LiquidCrystal::vt_reset (void)
 {
 	vt_state = 0;
 	vt_cmd = 0;
-	vt_args = 8;
-	while (vt_args--) {
-		vt_arg[vt_args] = 0;
-	}
 	vt_args = 0;
+	memset (vt_arg, 0, sizeof (vt_arg));
 }
 
 // execute a VT command
 size_t LiquidCrystal::vt_exec (void)
 {
-	uint8_t n;
+	uint8_t i, n;
 	double col, row;
 
 	switch (vt_cmd) {
 
-		// CSI[n]A (cursor up) or CSI[n]B (cursor down)
-		// NOTE: [n] is options and defaults to 1 if not given
-		case 'A'...'B': {
-			n = 1; // default
-			getLine (col, row); // get current cursor row & column
-			if (vt_arg[0] > 0) {
-				n = vt_arg[0];
-			}
-			while (n--) {
-				// row -= 1.0 is "cursor up (previous row)"
-				// row += 1.0 is "cursor down (next row)"
-				(vt_cmd == 'A') ? row -= 1.0 : row += 1.0;
-			}
-			setLine (col, row); // set new cursor row & column
-			break;
-		}
+		// CSI[n]A (cursor up), CSI[n]B (cursor down),
+		// CSI[n]C (cursor forward) or CSI[n]D (cursor backward).
+		// NOTE: [n] is optional and defaults to 1 if not given
+		case 'A' ... 'D': {
+			static struct {
+				const double col, row;
+			} adj[] = {
+				{  0.0, -1.0 },
+				{  0.0,  1.0 },
+				{  1.0,  0.0 },
+				{ -1.0,  0.0 },
+			};
 
-		// CSI[n]C (cursor forward) or CSI[n]D (cursor backward)
-		// NOTE: [n] is options and defaults to 1 if not given
-		case 'C'...'D': {
-			n = 1; // default
+			i = (vt_cmd - 'A');
+
+			n = (vt_arg[0] > 0) ? vt_arg[0] : 1;
+
 			getLine (col, row); // get current cursor row & column
-			if (vt_arg[0] > 0) {
-				n = vt_arg[0];
-			}
+
 			while (n--) {
-				// col += 1.0 is "cursor foward (next column)"
-				// col -= 1.0 is "cursor backward (previous column)"
-				(vt_cmd == 'C') ? col += 1.0 : col -= 1.0;
+				row += adj[i].row;
+				col += adj[i].col;
 			}
 			setLine (col, row); // set new cursor row & column
 			break;
 		}
 
 		// CSI[row];[column]f (line position X,Y)
+		// CSI[row];[column]H (line position X,Y)
 		// NOTE: non-standard, ANSI uses 1;1 as the home position while
 		//       we use 0;0 to conform with the Arduino numbering.
-		// NOTE: On a character LCD/VFD, cursor and line are the same
-		//       thing, but we support "f" for line and "H" for cursor
-		//       to conform to the VFD driver syntax. Not ANSI standard.
-		case 'f': {
-			if (vt_args == 2) {
-				setLine (vt_arg[0], vt_arg[1]);
-			}
-			break;
-		}
-
-		// CSI[x];[y]H (cursor position X,Y)
-		// NOTE: non-standard, ANSI uses 1;1 as the home position while
-		//       we use 0;0 to conform with the Arduino numbering.
-		// NOTE: On a character LCD/VFD, cursor and line are the same
-		//       thing, but we support "f" for line and "H" for cursor
-		//       to conform to the VFD driver syntax. Not ANSI standard.
+		case 'f':
 		case 'H': {
-			if (vt_args == 2) {
-				setCursor (vt_arg[0], vt_arg[1]);
-			}
+			col = vt_arg[0];
+			row = vt_arg[1];
+			setLine (col, row); // set new cursor row & column
 			break;
 		}
 
-		// CSI[n]J (erase in display `clear screen')
-		// NOTE: if [n] is not specified, it defaults to 0.
-		// NOTE: we support [n] 0...3, but in all cases the entire screen
-		//       is cleared and the cursor set to 0,0 (home). Not ANSI standard.
+		// CSI[2]J (erase in display `clear screen')
 		case 'J': {
-			if ((vt_arg[0] == 2) && !(vt_args < 0) && !(vt_args > 3)) {
+			if (vt_arg[0] == 2) {
 				clearScreen();
 			}
 			break;
@@ -645,30 +618,31 @@ size_t LiquidCrystal::vt_exec (void)
 
 		// CSIm (select graphic rendition)
 		// we sort of support this as follows:
-		// CSI0m: reset: set brightness to  50%
-		// CSI1m: bold:  set brightness to 100%
-		// CSI2m: faint: set brightness to  30%
+		// CSI0m:  reset:   set brightness to  50% and invert off
+		// CSI1m:  bold:    set brightness to 100%
+		// CSI2m:  faint:   set brightness to  20%
+		// CSI7m:  inverse: set video invert on
+		// CSI27m: inv off: set video invert off
 		// CSI30m...37m: foreground "colors" 30...37 are 8 steps of brightness
-		// CSI40m...47m: background "colors" 40...47 are 8 steps of brightness (same as above)
 		case 'm': {
-			if (vt_args > 0) {
-				switch (vt_arg[0]) {
+			for (n = 0; n < vt_args; n++) {
+				switch (vt_arg[n]) {
 					case 0: {
-						setBrightness (50);
+						setBrightness (50); // ANSI reset/normal
 						break;
 					}
 					case 1: {
-						setBrightness (100);
+						setBrightness (100); // ANSI bold/bright
 						break;
 					}
 					case 2: {
-						setBrightness (30);
+						setBrightness (20); // ANSI faint/dim
 						break;
 					}
 					// ansi colors used as brightness control
-					case 30 ... 49: {
-						// 30|40==0, 39|49==99
-						setBrightness ((vt_arg[0] % 10) * 11);
+					case 30 ... 39: {
+						// 30==0, 39==99
+						setBrightness ((vt_arg[n] % 10) * 11);
 						break;
 					}
 					default: {
@@ -680,17 +654,13 @@ size_t LiquidCrystal::vt_exec (void)
 
 		// CSIs (save cursor position)
 		case 's': {
-			if (vt_args == 1) {
-				pushCursor();
-			}
+			pushCursor();
 			break;
 		}
 
 		// CSIu (restore cursor position)
 		case 'u': {
-			if (vt_args == 1) {
-				popCursor();
-			}
+			popCursor();
 			break;
 		}
 
