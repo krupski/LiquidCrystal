@@ -677,8 +677,7 @@ size_t LiquidCrystal::vt_exec (void)
 size_t LiquidCrystal::write (int c)
 {
 	// support non-uint8_t writes
-	write ((uint8_t)(c));
-	return 1;
+	return write ((uint8_t)(c));
 }
 
 ///////////////////////////////////////////////////////////////

@@ -94,6 +94,7 @@ class LiquidCrystal : public Print {
 		size_t write (int);
 		virtual size_t write (uint8_t);
 		using Print::write;
+
 	private:
 		// private code begins here
 		// hd44780 commands
