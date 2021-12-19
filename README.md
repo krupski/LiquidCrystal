@@ -16,4 +16,4 @@ ___
 <div>&nbsp;</div>
 
 <sub><b>(Typical VFD Display)</b></sub>
-<a href="http://noritake-vfd.com/" title="This link takes you to the Noritake Itron VFD Website" target="_blank"><img width="414" height="190" src="https://camo.githubusercontent.com/83db1615f52cb9f826d4530dfd48cf9f7791731d/68747470733a2f2f7777772e6e6f726974616b652d6974726f6e2e6a702f70726f64756374732f6d6f64756c652f63752d752f696d675f73697a652f70726f5f732f637532303034392d7577326a2e6a7067" /></a>
+<a href="http://noritake-vfd.com/" title="This link takes you to the Noritake Itron VFD Website" target="_blank"><img src="https://noritake-vfd.com/images/products/detail/seriesvfdgu256x128cd903m.jpg" /></a>
